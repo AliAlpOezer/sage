@@ -13,7 +13,10 @@ timestamp: 2026-07-04T00:00:00Z
 - Idempotency proven: two consecutive runs, identical counts.
   (4836→4820 = 16 within-page duplicate texts collapsing via
   [content-hash ids](../decisions/chunk-identity.md).)
-- Test suite: **11 passed** (3 factory/model + 8 chunker spec).
+- **Full query loop**: `uv run python -m sage.ask "question"` → grounded,
+  inline-cited answer + numbered source list. Verified live with a
+  create_agent/LangGraph question; citations lined up with sources.
+- Test suite: **14 passed** (3 factory/model + 8 chunker spec + 3 assembly).
 - Embedding cost per full ingest: ~1.2M tokens ≈ **$0.025**.
 
 ## Bucket ledger
@@ -22,8 +25,8 @@ timestamp: 2026-07-04T00:00:00Z
 | 1 | Skeleton — ports, factory, config | done (commit d95b070) |
 | 2 | Ingestion — loader, embedder, store, pipeline | done (5190da1) |
 | — | Hand-written chunker | done, user-authored (e889968) |
-| 3 | Query loop — Generator adapter + ask.py | **next** |
-| 4 | 10-question failure log (sprint done-when) | pending |
+| 3 | Query loop — assembly, Generator adapter, ask.py | done |
+| 4 | 10-question failure log (sprint done-when) | **next** |
 | 5 | pgvector adapter (proves the VectorStore port) | pending |
 
 ## Open questions

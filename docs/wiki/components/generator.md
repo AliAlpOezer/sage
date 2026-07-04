@@ -1,21 +1,29 @@
 ---
 type: component
-title: Generator (port) — not yet implemented
-description: Bucket 3 work; answers a question grounded only in the retrieved chunks, with citations.
-resource: src/sage/ports.py
-tags: [generation, port, planned]
+title: Generator (port) — OpenRouterGenerator
+description: Grounded answering over numbered excerpts via OpenRouter chat completions, with inline citations.
+resource: src/sage/adapters/openrouter_generator.py
+tags: [generation, port]
 timestamp: 2026-07-04T00:00:00Z
 ---
 
-Port: `Generator.generate(question, context: list[ScoredChunk]) -> str` —
-answer grounded ONLY in the provided chunks, citing source URLs.
+Port: `Generator.generate(question, context: Sequence[ScoredChunk]) -> str`.
+Selected by `SAGE_GENERATOR` (default `openrouter`); model by
+`SAGE_GENERATION_MODEL` (default `anthropic/claude-sonnet-4-6`).
 
-**Status: port defined, no adapter yet** — Bucket 3 builds
-`OpenRouterGenerator` plus `ask.py` (query embedding → top-k → context
-assembly → answer). Defaults already configured: `SAGE_GENERATOR=openrouter`,
-`SAGE_GENERATION_MODEL=anthropic/claude-sonnet-4-6`, `SAGE_TOP_K=5`.
+Current adapter: **OpenRouterGenerator** — renders the context as numbered
+excerpts (`[1] Title (url) + text`), sends a system prompt enforcing
+grounded-only answering ("answer ONLY from the excerpts; cite [n] inline; if
+the excerpts don't contain the answer, say exactly that"), retries on
+429/5xx. `max_tokens=1024`.
 
-Context-assembly note for the implementation: order the strongest chunks at
-the edges of the prompt (lost-in-the-middle), and instruct the model to answer
-"I don't find this in the docs" rather than free-styling when context is
-insufficient. Decision & alternatives: [generation-model](../decisions/generation-model.md).
+Citation contract: excerpts are numbered in the order *received*; the caller
+([ask.py](../../..//src/sage/ask.py)) prints its source list from the same
+order, so `[n]` in the answer always matches the printed source `[n]`.
+
+Context ordering happens BEFORE the generator, in `src/sage/assembly.py`
+(edges-first — see [generation-model](../decisions/generation-model.md) on
+lost-in-the-middle).
+
+Verified 2026-07-04: end-to-end query about `create_agent`/LangGraph runtime
+returned a grounded, correctly-cited answer from 5 retrieved chunks.

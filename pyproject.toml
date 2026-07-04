@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-sage = "sage:main"
+sage = "sage.ask:main"
 
 [build-system]
 requires = ["uv_build>=0.11.26,<0.12.0"]

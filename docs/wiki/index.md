@@ -4,7 +4,7 @@ RAG over the LangChain docs, built from scratch as a learning project.
 Start here; every page is one concept. Maintained by the `/document` skill.
 
 ## State
-- [current-state](state/current-state.md) — Day 25: ingestion verified end-to-end (185 pages → 4820 vectors); query loop next.
+- [current-state](state/current-state.md) — Day 25: full RAG loop verified live (ingest 185 pages → 4820 vectors; ask.py answers with citations); failure log next.
 
 ## Decisions (each: what we chose, how it works, alternatives & trade-offs)
 - [architecture-ports-and-factory](decisions/architecture-ports-and-factory.md) — from scratch, four Protocol ports, registry factory keyed by .env.
@@ -22,7 +22,7 @@ Start here; every page is one concept. Maintained by the `/document` skill.
 - [chunker](components/chunker.md) — Chunker port; user-authored RecursiveChunker + its executable spec.
 - [embedder](components/embedder.md) — Embedder port; batched, semaphore-bounded OpenRouter client.
 - [vector-store](components/vector-store.md) — VectorStore port; Qdrant local-mode adapter.
-- [generator](components/generator.md) — Generator port; NOT yet implemented (Bucket 3).
+- [generator](components/generator.md) — Generator port; OpenRouterGenerator with grounded-only prompt and inline [n] citations.
 
 ## Concepts (beginner-first explainers)
 - [rag-pipeline](concepts/rag-pipeline.md) — the two data flows, why each stage exists, what "naive" deliberately leaves out (the W5–6 map).

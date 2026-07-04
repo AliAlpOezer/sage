@@ -1,7 +1,7 @@
 ---
 type: decision
 title: Generation — claude-sonnet-4-6 via OpenRouter, top_k=5
-description: Default answer-generation model and context size for the query loop (Bucket 3; defaults set, not yet exercised).
+description: Answer-generation model and context size for the query loop; exercised end-to-end 2026-07-04.
 resource: src/sage/config.py
 tags: [generation, query, cost]
 timestamp: 2026-07-04T00:00:00Z
@@ -9,8 +9,10 @@ timestamp: 2026-07-04T00:00:00Z
 
 ## Context
 The last pipeline stage: given the question and the top-k retrieved chunks,
-generate a grounded answer with citations. Decided as config defaults; the
-Generator adapter itself is Bucket 3 work.
+generate a grounded answer with citations. Implemented in Bucket 3
+([component](../components/generator.md)); context is arranged edges-first
+(strongest chunk opens the prompt, second-strongest closes it — the
+lost-in-the-middle mitigation, `src/sage/assembly.py`).
 
 ## What we chose
 `SAGE_GENERATION_MODEL=anthropic/claude-sonnet-4-6` via OpenRouter (same key

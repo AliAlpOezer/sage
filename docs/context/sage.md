@@ -38,16 +38,14 @@ head-to-head. Done-when (Day 25): 10 real questions answered end-to-end, failure
   anthropic/claude-sonnet-4-6. Both are .env values. (2026-07-04)
 
 ## Current State
-- Done: Bucket 1 — repo skeleton, ports, factory, Settings, tests.
-- Done: Bucket 2 scaffold — loader (sitemap → 185 md pages, verified live),
-  OpenRouter embedder (batched, semaphore-bounded, retry on 429/5xx),
-  Qdrant local-mode store, ingest pipeline, chunker executable spec
-  (tests/test_chunker.py — 8 tests, skip until implemented).
-- BLOCKED ON USER (by design): implement RecursiveChunker.chunk() in
-  src/sage/adapters/chunkers.py — sprint protocol, hand-written.
-  Then: `uv run python -m pytest` green → `uv run python -m sage.ingest`.
-- Then: Bucket 3 query loop (`ask.py`), Bucket 4 ten-question failure log,
-  Bucket 5 pgvector adapter.
+- Done: Buckets 1–3. Full RAG loop verified live 2026-07-04:
+  ingest (185 pages → 4836 chunks → 4820 vectors, idempotent, ~$0.025) and
+  ask.py (embed → top-k → edges-first assembly → cited answer). 14 tests pass.
+  Chunker was hand-written by the user (sprint protocol).
+- Deep documentation: docs/wiki/ (OKF-style bundle, maintained via the
+  /document skill at dev/.claude/skills/document/).
+- Next: Bucket 4 — ask 10 real questions, log failures (sprint done-when).
+- Then: Bucket 5 — pgvector adapter (needs Docker daemon running).
 
 ## Open Questions
 - Exact /oss/ page count and token volume (measure during Bucket 2).
@@ -58,6 +56,8 @@ head-to-head. Done-when (Day 25): 10 real questions answered end-to-end, failure
   VectorStore (ensure_collection/upsert/search/count), Generator (generate)
 - `src/sage/loader.py` — sitemap parse + concurrent page fetch -> list[Page]
 - `src/sage/ingest.py` — load → chunk → embed → upsert (run: python -m sage.ingest)
+- `src/sage/assembly.py` — arrange(ranked) edges-first (lost-in-the-middle)
+- `src/sage/ask.py` — query loop CLI (run: python -m sage.ask "question" [-k N])
 - `src/sage/factory.py` — register_* decorators + make_* builders keyed by Settings
 - `src/sage/config.py` — frozen Settings dataclass, Settings.from_env()
 - `src/sage/models.py` — Chunk (with make_id), ScoredChunk
