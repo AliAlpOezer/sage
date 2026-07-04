@@ -8,11 +8,20 @@ adding a backend is: write the adapter, decorate it, set its name in .env.
 from collections.abc import Callable
 
 from sage.config import Settings
-from sage.ports import Embedder, Generator, VectorStore
+from sage.ports import Chunker, Embedder, Generator, VectorStore
 
+_CHUNKERS: dict[str, Callable[[Settings], Chunker]] = {}
 _EMBEDDERS: dict[str, Callable[[Settings], Embedder]] = {}
 _VECTOR_STORES: dict[str, Callable[[Settings], VectorStore]] = {}
 _GENERATORS: dict[str, Callable[[Settings], Generator]] = {}
+
+
+def register_chunker(name: str):
+    def decorate(builder: Callable[[Settings], Chunker]):
+        _CHUNKERS[name] = builder
+        return builder
+
+    return decorate
 
 
 def register_embedder(name: str):
@@ -37,6 +46,11 @@ def register_generator(name: str):
         return builder
 
     return decorate
+
+
+def make_chunker(settings: Settings) -> Chunker:
+    _load_adapters()
+    return _build("chunker", _CHUNKERS, settings.chunker, settings)
 
 
 def make_embedder(settings: Settings) -> Embedder:

@@ -8,18 +8,24 @@ factory; nothing else in the pipeline changes.
 from collections.abc import Sequence
 from typing import Protocol, runtime_checkable
 
-from sage.models import Chunk, ScoredChunk
+from sage.models import Chunk, Page, ScoredChunk
+
+
+@runtime_checkable
+class Chunker(Protocol):
+    def chunk(self, page: Page) -> list[Chunk]:
+        """Split one page into retrieval-sized chunks, in document order."""
+        ...
 
 
 @runtime_checkable
 class Embedder(Protocol):
-    @property
-    def dimension(self) -> int:
-        """Length of the vectors this embedder produces (fixed per model)."""
-        ...
-
     async def embed(self, texts: Sequence[str]) -> list[list[float]]:
-        """Embed a batch of texts. Result order matches input order."""
+        """Embed a batch of texts. Result order matches input order.
+
+        Vector dimension is discovered from the result (len(vectors[0])),
+        not declared up front — one less thing to configure per model.
+        """
         ...
 
 

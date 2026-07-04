@@ -6,6 +6,13 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class Page:
+    url: str
+    title: str
+    markdown: str
+
+
+@dataclass(frozen=True)
 class Chunk:
     id: str
     text: str

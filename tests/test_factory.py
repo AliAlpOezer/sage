@@ -17,16 +17,11 @@ def test_registered_adapter_is_built_with_settings():
         def __init__(self, settings: Settings):
             self.settings = settings
 
-        @property
-        def dimension(self) -> int:
-            return 3
-
         async def embed(self, texts):
             return [[0.0, 0.0, 0.0] for _ in texts]
 
     embedder = factory.make_embedder(Settings(embedder="dummy", collection="test"))
     assert embedder.settings.collection == "test"
-    assert embedder.dimension == 3
 
 
 def test_chunk_id_is_deterministic_and_content_sensitive():
