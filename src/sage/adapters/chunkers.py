@@ -6,6 +6,7 @@ is implemented, then judge the implementation:
 
     uv run python -m pytest tests/test_chunker.py -v
 """
+import re
 
 from sage.config import Settings
 from sage.factory import register_chunker
@@ -19,4 +20,92 @@ class RecursiveChunker:
         self.overlap_chars = settings.chunk_overlap_chars
 
     def chunk(self, page: Page) -> list[Chunk]:
-        raise NotImplementedError("Day 25: write me by hand — spec in tests/test_chunker.py")
+        sections = re.split(r'^(?=#{1,6}\s)', page.markdown, flags=re.MULTILINE)
+
+        chunks = []
+
+        for section in sections:
+            section = section.strip()
+            if not section:
+                continue
+
+            # step 2: Section fits in one chunk
+            if len(section) <= self.max_chars:
+                chunks.append(Chunk(
+                    id=Chunk.make_id(page.url, section),
+                    text=section,
+                    source_url=page.url,
+                    title=page.title,
+                    position=len(chunks),
+                ))
+                continue
+            
+            #step 3: Section is too long, split into paragraphs
+            paragraphs = re.split(r'\n\n', section)
+            current_chunk_parts = []
+            current_chunk_length = 0
+
+            for para in paragraphs:
+                para =para.strip()
+                if not para:
+                    continue
+
+                if len(para) > self.max_chars:
+                    # If a paragraph is too long, split it into smaller parts
+                    if current_chunk_parts:
+                        chunk_text = '\n\n'.join(current_chunk_parts)
+                        chunks.append(Chunk(
+                            id=Chunk.make_id(page.url, chunk_text),
+                            text=chunk_text,
+                            source_url=page.url,
+                            title=page.title,
+                            position=len(chunks),
+                        ))
+                        current_chunk_parts = []
+                        current_chunk_length = 0
+                    
+                    # hard split with overlap
+                    stride = self.max_chars - self.overlap_chars
+                    for i in range(0, len(para), stride):
+                        piece = para[i:i+self.max_chars]
+                        chunks.append(Chunk(
+                            id=Chunk.make_id(page.url, piece),
+                            text=piece,
+                            source_url=page.url,
+                            title=page.title,
+                            position=len(chunks),  # Set position at construction
+                        ))
+                        if i + self.max_chars >= len(para):
+                            break
+                    continue
+
+                #step 5: Greedy packing - check if adding this paragraph would exceed the max_chars limit
+
+                separator_length = len("\n\n") if current_chunk_parts else 0
+                if current_chunk_length + len(para) + separator_length <= self.max_chars:
+                    current_chunk_parts.append(para)
+                    current_chunk_length += len(para) + separator_length
+                else:
+                    # Finalize the current chunk and start a new one
+                    chunk_text = '\n\n'.join(current_chunk_parts)
+                    chunks.append(Chunk(
+                        id=Chunk.make_id(page.url, chunk_text),
+                        text=chunk_text,
+                        source_url=page.url,
+                        title=page.title,
+                        position=len(chunks),
+                    ))
+                    current_chunk_parts = [para]
+                    current_chunk_length = len(para)
+
+            if current_chunk_parts:
+                chunk_text = '\n\n'.join(current_chunk_parts)
+                chunks.append(Chunk(
+                    id=Chunk.make_id(page.url, chunk_text),
+                    text=chunk_text,
+                    source_url=page.url,
+                    title=page.title,
+                    position=len(chunks),
+                ))
+
+        return chunks
