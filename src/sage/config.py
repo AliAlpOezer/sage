@@ -25,7 +25,7 @@ class Settings:
     qdrant_path: str = "data/qdrant"
     collection: str = "langchain-docs"
     generator: str = "openrouter"
-    generation_model: str = "anthropic/claude-sonnet-4-6"
+    generation_model: str = "nvidia/nemotron-3-super-120b-a12b:free"
     docs_index_url: str = "https://docs.langchain.com/sitemap.xml"
     docs_url_prefix: str = "https://docs.langchain.com/oss/python/"
     top_k: int = 5

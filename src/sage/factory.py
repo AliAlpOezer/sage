@@ -15,6 +15,15 @@ _EMBEDDERS: dict[str, Callable[[Settings], Embedder]] = {}
 _VECTOR_STORES: dict[str, Callable[[Settings], VectorStore]] = {}
 _GENERATORS: dict[str, Callable[[Settings], Generator]] = {}
 
+# Embedded qdrant holds an exclusive per-process file lock on its storage dir,
+# so there can be only ONE client per process. Building a store per request and
+# relying on GC to release the lock is fragile: a request that errors mid-flight
+# (e.g. the generator raising) keeps the client alive via the exception
+# traceback, never releases the lock, and wedges every later request with
+# "already accessed by another instance". Memoize instead — one long-lived store
+# per distinct backend config, reused across requests.
+_VECTOR_STORE_CACHE: dict[tuple[str, str, str], VectorStore] = {}
+
 
 def register_chunker(name: str):
     def decorate(builder: Callable[[Settings], Chunker]):
@@ -60,7 +69,17 @@ def make_embedder(settings: Settings) -> Embedder:
 
 def make_vector_store(settings: Settings) -> VectorStore:
     _load_adapters()
-    return _build("vector store", _VECTOR_STORES, settings.vector_store, settings)
+    key = (settings.vector_store, settings.qdrant_path, settings.collection)
+    store = _VECTOR_STORE_CACHE.get(key)
+    if store is None:
+        store = _build("vector store", _VECTOR_STORES, settings.vector_store, settings)
+        _VECTOR_STORE_CACHE[key] = store
+    return store
+
+
+def reset_vector_store_cache() -> None:
+    """Drop cached stores (releasing their clients). For tests / a clean rebuild."""
+    _VECTOR_STORE_CACHE.clear()
 
 
 def make_generator(settings: Settings) -> Generator:
