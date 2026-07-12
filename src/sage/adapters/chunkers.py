@@ -109,3 +109,38 @@ class RecursiveChunker:
                 ))
 
         return chunks
+
+
+@register_chunker("fixed")
+class FixedChunker:
+    """Naive fixed-size sliding window — structure-blind, splits mid-sentence.
+
+    The comparison foil for the Day-32 bake-off: it ignores markdown headings and
+    paragraphs entirely, so it's the "what does honoring structure actually buy?"
+    control against the hand-written recursive chunker. (Not a learning artifact —
+    the recursive one is; this exists only to be measured against.)
+    """
+
+    def __init__(self, settings: Settings):
+        self.max_chars = settings.chunk_max_chars
+        self.overlap_chars = settings.chunk_overlap_chars
+
+    def chunk(self, page: Page) -> list[Chunk]:
+        text = page.markdown.strip()
+        if not text:
+            return []
+        stride = max(1, self.max_chars - self.overlap_chars)
+        chunks: list[Chunk] = []
+        for i in range(0, len(text), stride):
+            piece = text[i:i + self.max_chars].strip()
+            if piece:
+                chunks.append(Chunk(
+                    id=Chunk.make_id(page.url, piece),
+                    text=piece,
+                    source_url=page.url,
+                    title=page.title,
+                    position=len(chunks),
+                ))
+            if i + self.max_chars >= len(text):
+                break
+        return chunks

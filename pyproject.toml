@@ -27,3 +27,9 @@ dev = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
 ]
+eval = [
+    "langchain-community<0.4",
+    "langchain-core<0.4",
+    "langchain-openai<0.3",
+    "ragas>=0.2,<0.3",
+]

@@ -24,8 +24,13 @@ class Settings:
     vector_store: str = "qdrant"
     qdrant_path: str = "data/qdrant"
     collection: str = "langchain-docs"
+    assembly_order: str = "edges"  # edges | naive (Day-33 Lost-in-the-Middle knob)
     generator: str = "openrouter"
     generation_model: str = "nvidia/nemotron-3-super-120b-a12b:free"
+    judge_provider: str = "openrouter"  # openrouter | groq | gemini
+    judge_model: str = "nvidia/nemotron-3-super-120b-a12b:free"
+    groq_api_key: str = ""
+    gemini_api_key: str = ""
     docs_index_url: str = "https://docs.langchain.com/sitemap.xml"
     docs_url_prefix: str = "https://docs.langchain.com/oss/python/"
     top_k: int = 5
@@ -47,8 +52,13 @@ class Settings:
             vector_store=os.getenv("SAGE_VECTOR_STORE", d.vector_store),
             qdrant_path=os.getenv("SAGE_QDRANT_PATH", d.qdrant_path),
             collection=os.getenv("SAGE_COLLECTION", d.collection),
+            assembly_order=os.getenv("SAGE_ASSEMBLY_ORDER", d.assembly_order),
             generator=os.getenv("SAGE_GENERATOR", d.generator),
             generation_model=os.getenv("SAGE_GENERATION_MODEL", d.generation_model),
+            judge_provider=os.getenv("SAGE_JUDGE_PROVIDER", d.judge_provider),
+            judge_model=os.getenv("SAGE_JUDGE_MODEL", d.judge_model),
+            groq_api_key=os.getenv("GROQ_API_KEY", d.groq_api_key),
+            gemini_api_key=os.getenv("GEMINI_API_KEY", d.gemini_api_key),
             docs_index_url=os.getenv("SAGE_DOCS_INDEX_URL", d.docs_index_url),
             docs_url_prefix=os.getenv("SAGE_DOCS_URL_PREFIX", d.docs_url_prefix),
             top_k=int(os.getenv("SAGE_TOP_K", str(d.top_k))),

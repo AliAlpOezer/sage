@@ -46,7 +46,7 @@ def answer(question: str, k: int | None = None, settings: Settings | None = None
 
     query_vector = asyncio.run(embedder.embed([question]))[0]
     hits = store.search(query_vector, k)
-    context = arrange(hits)
+    context = arrange(hits, order=settings.assembly_order)
     text = generator.generate(question, context)
 
     sources = [

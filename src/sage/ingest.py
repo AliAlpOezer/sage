@@ -13,8 +13,8 @@ from sage.factory import make_chunker, make_embedder, make_vector_store
 from sage.loader import load_pages
 
 
-async def run() -> None:
-    settings = Settings.from_env()
+async def run(settings: Settings | None = None) -> None:
+    settings = settings or Settings.from_env()
     chunker = make_chunker(settings)
     embedder = make_embedder(settings)
     store = make_vector_store(settings)
