@@ -638,7 +638,7 @@ _notes: subtle behavior — predicted weak spot_
   > <img src="https://mintcdn.com/langchain-5e9cc07a/-_xGPoyjhyiDWTPJ/oss/images/checkpoints.jpg?fit=max&auto=format&n=-_xGPoyjhyiDWTPJ&q=85&s=966566aaae853ed4d240c2d0d067467c" alt="Checkpoints" width="2316" height="748" data-path="oss/images/checkpoints.jpg" />
   > <Info>
   >   **Agent Server handles checkpointing automa
-**A[h002]:** 
+**A[h002]:** The corpus doesn't document `checkpointer=True`, only explicit checkpointer instances such as `InMemorySaver` or a durable checkpointer passed at compile time.
 
 ## h003 · hard
 **Q:** How do you write a class-based custom middleware with both sync and async hooks?
@@ -1437,7 +1437,7 @@ _notes: interrupts + persistence + checkpointers_
   > <img src="https://mintcdn.com/langchain-5e9cc07a/-_xGPoyjhyiDWTPJ/oss/images/checkpoints.jpg?fit=max&auto=format&n=-_xGPoyjhyiDWTPJ&q=85&s=966566aaae853ed4d240c2d0d067467c" alt="Checkpoints" width="2316" height="748" data-path="oss/images/checkpoints.jpg" />
   > <Info>
   >   **Agent Server handles checkpointing automa
-**A[m006]:** 
+**A[m006]:** To resume a graph paused with `interrupt()`, you send `Command(resume=...)` back into the graph using the same config (matching `thread_id`), and the value passed becomes the return value of the `interrupt()` call; the paused state is not ephemeral but persisted by the checkpointer (e.g. `InMemorySaver`, or a durable checkpointer in production) keyed on that `thread_id`, saved at the moment `interrupt()` is hit so it can later be retrieved and resumed from where it left off.
 
 ## m007 · multi-hop
 **Q:** How do you create a deep agent that uses subagents and persists their memory across runs?
