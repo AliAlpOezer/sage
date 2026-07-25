@@ -30,6 +30,7 @@ class Settings:
     judge_provider: str = "openrouter"  # openrouter | groq | gemini
     judge_model: str = "nvidia/nemotron-3-super-120b-a12b:free"
     groq_api_key: str = ""
+    groq_api_keys: tuple[str, ...] = ()  # extra keys from separate orgs, splits judge load
     gemini_api_key: str = ""
     docs_index_url: str = "https://docs.langchain.com/sitemap.xml"
     docs_url_prefix: str = "https://docs.langchain.com/oss/python/"
@@ -58,6 +59,9 @@ class Settings:
             judge_provider=os.getenv("SAGE_JUDGE_PROVIDER", d.judge_provider),
             judge_model=os.getenv("SAGE_JUDGE_MODEL", d.judge_model),
             groq_api_key=os.getenv("GROQ_API_KEY", d.groq_api_key),
+            groq_api_keys=tuple(
+                k.strip() for k in os.getenv("GROQ_API_KEYS", "").split(",") if k.strip()
+            ),
             gemini_api_key=os.getenv("GEMINI_API_KEY", d.gemini_api_key),
             docs_index_url=os.getenv("SAGE_DOCS_INDEX_URL", d.docs_index_url),
             docs_url_prefix=os.getenv("SAGE_DOCS_URL_PREFIX", d.docs_url_prefix),

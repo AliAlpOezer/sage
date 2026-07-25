@@ -27,7 +27,7 @@ from ragas import EvaluationDataset, SingleTurnSample, evaluate
 
 from sage.config import Settings
 from sage.evals.dataset import load_triples
-from sage.evals.judge import build_judge, default_metrics, default_run_config
+from sage.evals.judge import build_judges, default_metrics, default_run_config
 from sage.service import answer as baseline_answer
 
 EVALS_DIR = Path("evals")
@@ -91,28 +91,38 @@ def phase_score(settings: Settings) -> None:
             answers[rec["id"]] = rec
 
     ids = [i for i in triples if i in answers]
-    samples = [
-        SingleTurnSample(
-            user_input=triples[i].question,
-            response=answers[i]["answer"],
-            retrieved_contexts=answers[i]["retrieved_contexts"],
-            reference=triples[i].ground_truth,
-        )
-        for i in ids
-    ]
-    print(f"score: {len(samples)} samples with judge={settings.judge_model}")
+    print(f"score: {len(ids)} samples with judge={settings.judge_model}")
 
-    llm, emb = build_judge(settings)
-    result = evaluate(
-        dataset=EvaluationDataset(samples=samples),
-        metrics=default_metrics(),
-        llm=llm,
-        embeddings=emb,
-        run_config=default_run_config(settings),
-    )
-    df = result.to_pandas()
-    df.insert(0, "id", ids)
-    df["category"] = [triples[i].category for i in ids]
+    judges = build_judges(settings)
+    id_chunks = [ids[i::len(judges)] for i in range(len(judges))]  # interleaved, evens out easy/hard mix
+    run_config = default_run_config(settings)
+    dfs = []
+    for n, (chunk_ids, (llm, emb)) in enumerate(zip(id_chunks, judges), 1):
+        if not chunk_ids:
+            continue
+        samples = [
+            SingleTurnSample(
+                user_input=triples[i].question,
+                response=answers[i]["answer"],
+                retrieved_contexts=answers[i]["retrieved_contexts"],
+                reference=triples[i].ground_truth,
+            )
+            for i in chunk_ids
+        ]
+        print(f"  judge {n}/{len(judges)}: {len(samples)} samples")
+        result = evaluate(
+            dataset=EvaluationDataset(samples=samples),
+            metrics=default_metrics(),
+            llm=llm,
+            embeddings=emb,
+            run_config=run_config,
+        )
+        chunk_df = result.to_pandas()
+        chunk_df.insert(0, "id", chunk_ids)
+        chunk_df["category"] = [triples[i].category for i in chunk_ids]
+        dfs.append(chunk_df)
+
+    df = pd.concat(dfs, ignore_index=True) if len(dfs) > 1 else dfs[0]
     df.to_csv(DETAILS, index=False)
     _write_scorecard(df, settings, n_total=len(triples))
     print(f"wrote {SCORECARD} and {DETAILS}")

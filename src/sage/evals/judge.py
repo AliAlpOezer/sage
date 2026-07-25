@@ -39,6 +39,32 @@ _JUDGE_PROVIDERS = {
 }
 
 
+def _build_embeddings(settings: Settings) -> LangchainEmbeddingsWrapper:
+    if not settings.openrouter_api_key:
+        raise RuntimeError("OPENROUTER_API_KEY missing — needed for judge embeddings.")
+    emb = OpenAIEmbeddings(
+        model=settings.embedding_model,
+        api_key=settings.openrouter_api_key,
+        base_url=OPENROUTER_BASE_URL,
+        # OpenRouter model ids ("openai/text-embedding-3-small") aren't known to
+        # tiktoken; skip the client-side context-length tokenization it would need.
+        check_embedding_ctx_length=False,
+    )
+    return LangchainEmbeddingsWrapper(emb)
+
+
+def _build_chat(settings: Settings, base_url: str, key: str) -> LangchainLLMWrapper:
+    chat = ChatOpenAI(
+        model=settings.judge_model,
+        api_key=key,
+        base_url=base_url,
+        temperature=0.0,
+        timeout=120,
+        max_retries=3,
+    )
+    return LangchainLLMWrapper(chat)
+
+
 def build_judge(settings: Settings | None = None):
     """Return (llm, embeddings) RAGAS wrappers.
 
@@ -56,26 +82,25 @@ def build_judge(settings: Settings | None = None):
     key = getattr(s, key_attr)
     if not key:
         raise RuntimeError(f"{env_name} missing — needed for judge_provider={s.judge_provider}.")
-    if not s.openrouter_api_key:
-        raise RuntimeError("OPENROUTER_API_KEY missing — needed for judge embeddings.")
+    return _build_chat(s, base_url, key), _build_embeddings(s)
 
-    chat = ChatOpenAI(
-        model=s.judge_model,
-        api_key=key,
-        base_url=base_url,
-        temperature=0.0,
-        timeout=120,
-        max_retries=3,
-    )
-    emb = OpenAIEmbeddings(
-        model=s.embedding_model,
-        api_key=s.openrouter_api_key,
-        base_url=OPENROUTER_BASE_URL,
-        # OpenRouter model ids ("openai/text-embedding-3-small") aren't known to
-        # tiktoken; skip the client-side context-length tokenization it would need.
-        check_embedding_ctx_length=False,
-    )
-    return LangchainLLMWrapper(chat), LangchainEmbeddingsWrapper(emb)
+
+def build_judges(settings: Settings | None = None) -> list[tuple[LangchainLLMWrapper, LangchainEmbeddingsWrapper]]:
+    """Return one (llm, embeddings) pair per available judge key.
+
+    Groq's TPD limit is scoped per-organization, so separate accounts (separate
+    keys in SAGE_GROQ_API_KEYS / GROQ_API_KEYS below) each carry their own quota.
+    Splitting the eval set across them multiplies the effective daily budget.
+    Falls back to a single judge (build_judge) for every other provider, or when
+    no extra Groq keys are configured.
+    """
+    s = settings or Settings.from_env()
+    if s.judge_provider == "groq" and s.groq_api_keys:
+        keys = [s.groq_api_key, *s.groq_api_keys] if s.groq_api_key else list(s.groq_api_keys)
+        base_url, _, _ = _JUDGE_PROVIDERS["groq"]
+        emb = _build_embeddings(s)
+        return [(_build_chat(s, base_url, k), emb) for k in keys]
+    return [build_judge(s)]
 
 
 def default_run_config(settings: Settings | None = None) -> RunConfig:
