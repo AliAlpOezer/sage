@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 @dataclass(frozen=True)
 class Settings:
     openrouter_api_key: str = ""
+    openrouter_api_key_2: str = ""  # failover key: generator/embedder switch to it on a 429
     chunker: str = "recursive"
     chunk_max_chars: int = 1800
     chunk_overlap_chars: int = 200
@@ -42,6 +43,7 @@ class Settings:
         d = cls()
         return cls(
             openrouter_api_key=os.getenv("OPENROUTER_API_KEY", d.openrouter_api_key),
+            openrouter_api_key_2=os.getenv("OPENROUTER_API_KEY_2", d.openrouter_api_key_2),
             chunker=os.getenv("SAGE_CHUNKER", d.chunker),
             chunk_max_chars=int(os.getenv("SAGE_CHUNK_MAX_CHARS", str(d.chunk_max_chars))),
             chunk_overlap_chars=int(os.getenv("SAGE_CHUNK_OVERLAP_CHARS", str(d.chunk_overlap_chars))),

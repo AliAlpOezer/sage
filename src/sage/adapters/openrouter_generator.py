@@ -38,10 +38,12 @@ def _render_excerpts(context: Sequence[ScoredChunk]) -> str:
 @register_generator("openrouter")
 class OpenRouterGenerator:
     def __init__(self, settings: Settings):
-        self.api_key = settings.openrouter_api_key
+        self.api_keys = [k for k in (settings.openrouter_api_key, settings.openrouter_api_key_2) if k]
         self.model = settings.generation_model
 
     def generate(self, question: str, context: Sequence[ScoredChunk]) -> str:
+        if not self.api_keys:
+            raise RuntimeError("OPENROUTER_API_KEY missing — needed for generation.")
         user = f"Documentation excerpts:\n\n{_render_excerpts(context)}\n\nQuestion: {question}"
         payload = {
             "model": self.model,
@@ -51,13 +53,19 @@ class OpenRouterGenerator:
                 {"role": "user", "content": user},
             ],
         }
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        with httpx.Client(timeout=120, headers=headers) as client:
-            for attempt in (1, 2, 3):
-                response = client.post(_URL, json=payload)
-                if response.status_code in (429, 500, 502, 503) and attempt < 3:
-                    time.sleep(2**attempt)
-                    continue
-                response.raise_for_status()
-                break
-        return response.json()["choices"][0]["message"]["content"]
+        for key_index, key in enumerate(self.api_keys):
+            is_last_key = key_index == len(self.api_keys) - 1
+            headers = {"Authorization": f"Bearer {key}"}
+            with httpx.Client(timeout=120, headers=headers) as client:
+                for attempt in (1, 2, 3):
+                    response = client.post(_URL, json=payload)
+                    if response.status_code in (429, 500, 502, 503) and attempt < 3:
+                        time.sleep(2**attempt)
+                        continue
+                    break
+            # A 429 means this key's own rate limit is exhausted, not a transient
+            # blip - move to the next key rather than burning its retry budget too.
+            if response.status_code == 429 and not is_last_key:
+                continue
+            response.raise_for_status()
+            return response.json()["choices"][0]["message"]["content"]
