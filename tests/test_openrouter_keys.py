@@ -94,10 +94,10 @@ def test_every_key_429_tries_each_once_then_raises_exhausted():
     assert ring.current() == (0, "key-1")
 
 
-def test_non_429_errors_are_not_rotated_or_relabelled():
+def test_server_errors_are_not_rotated_or_relabelled():
     ring = _ring(2)
     transport = RotatingKeyTransport(
-        ring, httpx.MockTransport(lambda r: httpx.Response(402))
+        ring, httpx.MockTransport(lambda r: httpx.Response(500))
     )
     with httpx.Client(transport=transport) as client:
         response = client.post(URL, json={})
@@ -145,3 +145,44 @@ def test_async_transport_rotates_too():
 def test_no_keys_is_a_clear_error():
     with pytest.raises(RuntimeError, match="OPENROUTER_API_KEY_1"):
         KeyRing([])
+
+
+def test_402_rotates_to_the_funded_key():
+    ring, seen = _ring(8), []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        key = request.headers["Authorization"].removeprefix("Bearer ")
+        seen.append(key)
+        return httpx.Response(200 if key == "key-2" else 402, json={"key": key})
+
+    transport = RotatingKeyTransport(ring, httpx.MockTransport(handler))
+    with httpx.Client(transport=transport) as client:
+        assert client.post(URL, json={}).json() == {"key": "key-2"}
+        client.post(URL, json={})
+    assert seen == ["key-1", "key-2", "key-2"]  # settles on the funded key
+
+
+def test_402_on_every_key_raises_exhausted():
+    ring = _ring(2)
+    transport = RotatingKeyTransport(
+        ring, httpx.MockTransport(lambda r: httpx.Response(402))
+    )
+    with httpx.Client(transport=transport) as client:
+        response = client.post(URL, json={})
+    with pytest.raises(OpenRouterKeysExhausted, match="credit"):
+        raise_for_status(response)
+
+
+def test_pools_keep_separate_pointers():
+    from sage.config import Settings
+    from sage.openrouter import key_ring
+
+    s = Settings(
+        openrouter_api_keys=(
+            ("OPENROUTER_API_KEY_1", "a"),
+            ("OPENROUTER_API_KEY_2", "b"),
+        )
+    )
+    key_ring(s, "embeddings").rotate_past(0, 402)
+    assert key_ring(s, "embeddings").current() == (1, "b")
+    assert key_ring(s, "chat").current() == (0, "a")

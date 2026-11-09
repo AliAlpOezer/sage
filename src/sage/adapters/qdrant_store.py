@@ -1,5 +1,6 @@
 """VectorStore adapter: Qdrant in embedded local mode (no server, file-backed)."""
 
+import atexit
 from collections.abc import Sequence
 
 from qdrant_client import QdrantClient
@@ -14,6 +15,9 @@ from sage.models import Chunk, ScoredChunk
 class QdrantStore:
     def __init__(self, settings: Settings):
         self.client = QdrantClient(path=settings.qdrant_path)
+        # Close before interpreter teardown: otherwise QdrantClient.__del__ runs after
+        # sys.meta_path is gone and prints an ImportError traceback on every exit.
+        atexit.register(self.client.close)
         self.collection = settings.collection
 
     def ensure_collection(self, dimension: int) -> None:

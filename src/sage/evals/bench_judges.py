@@ -47,7 +47,7 @@ def main() -> None:
         OpenAIEmbeddings(
             model=s.embedding_model,
             check_embedding_ctx_length=False,
-            **openrouter.openai_kwargs(s, timeout=60),
+            **openrouter.openai_kwargs(s, timeout=60, pool="embeddings"),
         )
     )
     dataset = EvaluationDataset(samples=SAMPLES)

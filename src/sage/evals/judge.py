@@ -55,7 +55,7 @@ def _build_embeddings(settings: Settings) -> LangchainEmbeddingsWrapper:
         # OpenRouter model ids ("openai/text-embedding-3-small") aren't known to
         # tiktoken; skip the client-side context-length tokenization it would need.
         check_embedding_ctx_length=False,
-        **openrouter.openai_kwargs(settings, timeout=60),
+        **openrouter.openai_kwargs(settings, timeout=60, pool="embeddings"),
     )
     return LangchainEmbeddingsWrapper(emb)
 

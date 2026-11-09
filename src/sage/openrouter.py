@@ -10,6 +10,10 @@ once; when every key answers 429, the caller gets that 429, and
 model's *provider* raised (see `is_upstream_limit`) is returned at once without
 rotating: it limits every caller, so no key can get past it.
 
+A 402 (no credit for a paid model) rotates too, so paid calls such as
+embeddings find the funded key. Each `pool` keeps its own pointer: embeddings
+settle on the funded key while chat traffic still walks the free keys in order.
+
 The rotation lives in an httpx transport so every OpenRouter caller shares one
 pointer: the generator and embedder (plain httpx) and the RAGAS judge (the OpenAI
 SDK inside langchain_openai, which accepts injected httpx clients).
@@ -36,6 +40,10 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 _PLACEHOLDER_KEY = "set-by-rotating-transport"
 
 log = logging.getLogger(__name__)
+
+# 429: this key's rate limit is spent. 402: this key's account has no credit for a
+# paid model. Either way another key may succeed, so both rotate.
+_ROTATE_ON = frozenset({402, 429})
 
 
 class OpenRouterKeysExhausted(RuntimeError):
@@ -70,8 +78,8 @@ class KeyRing:
     def name(self, slot: int) -> str:
         return self._keys[slot][0]
 
-    def rotate_past(self, slot: int) -> None:
-        """Key `slot` got a 429: make the next key current, wrapping last -> first.
+    def rotate_past(self, slot: int, status: int = 429) -> None:
+        """Key `slot` got a 429 or 402: make the next key current, wrapping last -> first.
 
         A no-op when another request already rotated past `slot`, so concurrent
         429s on one key advance the pointer once, not once per request.
@@ -81,7 +89,8 @@ class KeyRing:
                 return
             self._current = (slot + 1) % len(self._keys)
             log.warning(
-                "OpenRouter 429 on %s, switching to %s",
+                "OpenRouter %s on %s, switching to %s",
+                status,
                 self.name(slot),
                 self.name(self._current),
             )
@@ -114,12 +123,12 @@ class RotatingKeyTransport(httpx.BaseTransport):
             slot, key = self._ring.current()
             request.headers["Authorization"] = f"Bearer {key}"
             response = self._inner.handle_request(request)
-            if response.status_code != 429:
+            if response.status_code not in _ROTATE_ON:
                 return response
             response.read()
             if is_upstream_limit(response):
                 return response
-            self._ring.rotate_past(slot)
+            self._ring.rotate_past(slot, response.status_code)
             if attempt < len(self._ring) - 1:
                 response.close()
         return response
@@ -141,12 +150,12 @@ class AsyncRotatingKeyTransport(httpx.AsyncBaseTransport):
             slot, key = self._ring.current()
             request.headers["Authorization"] = f"Bearer {key}"
             response = await self._inner.handle_async_request(request)
-            if response.status_code != 429:
+            if response.status_code not in _ROTATE_ON:
                 return response
             await response.aread()
             if is_upstream_limit(response):
                 return response
-            self._ring.rotate_past(slot)
+            self._ring.rotate_past(slot, response.status_code)
             if attempt < len(self._ring) - 1:
                 await response.aclose()
         return response
@@ -155,36 +164,43 @@ class AsyncRotatingKeyTransport(httpx.AsyncBaseTransport):
         await self._inner.aclose()
 
 
-_rings: dict[tuple[tuple[str, str], ...], KeyRing] = {}
+_rings: dict[tuple[str, tuple[tuple[str, str], ...]], KeyRing] = {}
 _rings_lock = threading.Lock()
 
 
-def key_ring(settings: Settings) -> KeyRing:
+def key_ring(settings: Settings, pool: str = "chat") -> KeyRing:
     """The process-wide ring for these keys, so all callers rotate together."""
     keys = settings.openrouter_api_keys
+    ring_id = (pool, keys)
     with _rings_lock:
-        if keys not in _rings:
-            _rings[keys] = KeyRing(keys)
-        return _rings[keys]
+        if ring_id not in _rings:
+            _rings[ring_id] = KeyRing(keys)
+        return _rings[ring_id]
 
 
-def client(settings: Settings, **kwargs: Any) -> httpx.Client:
-    return httpx.Client(transport=RotatingKeyTransport(key_ring(settings)), **kwargs)
-
-
-def async_client(settings: Settings, **kwargs: Any) -> httpx.AsyncClient:
-    return httpx.AsyncClient(
-        transport=AsyncRotatingKeyTransport(key_ring(settings)), **kwargs
+def client(settings: Settings, pool: str = "chat", **kwargs: Any) -> httpx.Client:
+    return httpx.Client(
+        transport=RotatingKeyTransport(key_ring(settings, pool)), **kwargs
     )
 
 
-def openai_kwargs(settings: Settings, timeout: float) -> dict[str, Any]:
+def async_client(
+    settings: Settings, pool: str = "chat", **kwargs: Any
+) -> httpx.AsyncClient:
+    return httpx.AsyncClient(
+        transport=AsyncRotatingKeyTransport(key_ring(settings, pool)), **kwargs
+    )
+
+
+def openai_kwargs(
+    settings: Settings, timeout: float, pool: str = "chat"
+) -> dict[str, Any]:
     """Constructor kwargs pointing a langchain_openai model at OpenRouter with rotation."""
     return {
         "api_key": _PLACEHOLDER_KEY,
         "base_url": OPENROUTER_BASE_URL,
-        "http_client": client(settings, timeout=timeout),
-        "http_async_client": async_client(settings, timeout=timeout),
+        "http_client": client(settings, pool, timeout=timeout),
+        "http_async_client": async_client(settings, pool, timeout=timeout),
     }
 
 
@@ -202,6 +218,12 @@ def raise_for_status(response: httpx.Response) -> None:
                 "The model's provider is rate-limiting it for everyone; another key "
                 "will not help. Retry later or pick another model. "
                 f"Response: {e.response.text[:300]}"
+            ) from e
+        if e.response.status_code == 402:
+            raise OpenRouterKeysExhausted(
+                "No OpenRouter key has credit for this request (402 on every key). "
+                "Paid models need the funded key; use a ':free' model otherwise. "
+                f"Last response: {e.response.text[:300]}"
             ) from e
         if e.response.status_code == 429:
             raise OpenRouterKeysExhausted(

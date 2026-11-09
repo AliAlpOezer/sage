@@ -4,8 +4,9 @@ One entry per settled decision, newest first — stops an agent from cheerfully
 re-proposing something already rejected.
 
 ### OpenRouter keys rotate on 429 inside an httpx transport
-Date: 2026-11-09 · Status: settled · revisit-if OpenRouter credit is bought (one key
-with 1,000 free req/day makes rotation moot)
+Date: 2026-11-09 · Status: settled · revisit-if Alp stops wanting the free keys used
+(credit was bought on key 2's account the same day; 402 now rotates too, so paid calls
+find the funded key, and each `pool` - chat, embeddings - has its own key pointer)
 Keys are numbered `OPENROUTER_API_KEY_1..N` in `.env` (the unnumbered
 `OPENROUTER_API_KEY` is gone). One process-wide pointer marks the current key; a
 key-level 429 moves it to the next number and the last wraps to `_1`, so later requests

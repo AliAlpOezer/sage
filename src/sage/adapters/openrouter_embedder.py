@@ -25,12 +25,12 @@ class OpenRouterEmbedder:
         self.model = settings.embedding_model
         self.batch_size = settings.embed_batch_size
         self.concurrency = settings.embed_concurrency
-        openrouter.key_ring(settings)  # fail at construction if no keys are configured
+        openrouter.key_ring(settings, "embeddings")  # fail at construction if no keys are configured
 
     async def embed(self, texts: Sequence[str]) -> list[list[float]]:
         batches = [texts[i : i + self.batch_size] for i in range(0, len(texts), self.batch_size)]
         sem = asyncio.Semaphore(self.concurrency)
-        async with openrouter.async_client(self.settings, timeout=60) as client:
+        async with openrouter.async_client(self.settings, "embeddings", timeout=60) as client:
             results = await asyncio.gather(
                 *(self._embed_batch(client, sem, batch) for batch in batches)
             )

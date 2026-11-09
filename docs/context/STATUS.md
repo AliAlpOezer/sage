@@ -19,6 +19,12 @@ every retrieval change has to be scored to count.
   carries the 4 unmerged commits of `add-context-pack`). 34 tests pass, ruff clean.
   Still to do: a separate repo-wide `ruff format` commit (23 of 36 files do not match
   the global ruff config; the repo has no `[tool.ruff]`).
+- OpenRouter is the working route (2026-11-09): `$10` credit bought on the account of
+  `OPENROUTER_API_KEY_2` (total_credits 10, so 1,000 free-model requests/day). `.env` has
+  `SAGE_GENERATOR=openrouter` and `SAGE_JUDGE_PROVIDER=openrouter`. Paid query embeddings
+  402 on the other keys and rotate to key 2 (own `embeddings` key pointer); chat calls use
+  `:free` models and walk keys 1..8, so credit is only spent on embeddings (cents).
+  Verified with a real `sage.ask` question end to end.
 - Hybrid vs baseline is **unresolved**: hybrid (2026-08-04) scored faithfulness 0.880,
   answer_relevancy 0.650, context_precision 0.564, context_recall 0.629 vs baseline
   0.948 / 0.620 / 0.593 / 0.679, but generator and judge both changed between the runs.
@@ -26,19 +32,13 @@ every retrieval change has to be scored to count.
 
 ## Blocked
 
-- `answer_relevancy`, the generate phase and `/ask` need query embeddings, and
-  `openai/text-embedding-3-small` returns 402 on all 8 free-tier keys. Fix: switch to the
-  free `nvidia/nemotron-3.5-embed-1b:free` (2048 dims, verified live), which means
-  re-ingesting into a new collection and a new baseline. Alp's call.
 - `rerank-bge` stays segfault-blocked (`gotchas.md`).
 
 ## Next up
 
-1. Alp is deciding on a one-time $10 OpenRouter credit purchase (free-model cap 50 -> 1,000
-   requests/day, keeps the paid embedder and so the existing baseline valid).
-2. Switch generator + judge to `openrouter` (OmniRoute is not running), pick the embedder
-   (above), make the RAGAS score phase resumable (gotchas option 3), re-score baseline and
-   hybrid under one judge.
+1. Make the RAGAS score phase resumable (gotchas option 3), then re-score baseline and
+   hybrid under one judge (`uv run python -m sage.evals.harness run <variant> --phase score`).
+2. Then score `rerank-cohere` and the contextual arms against that same judge.
 3. Alp labels ~20 more multi-hop questions: with 4 of 36, a GraphRAG win cannot show up
    in the scorecard. (Labeling is never delegated, see `decisions.md`.)
 4. Native hybrid in Qdrant (sparse vectors with IDF + dense HNSW in one collection);
