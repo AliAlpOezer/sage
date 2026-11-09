@@ -51,7 +51,7 @@ adapter and registering it — nothing else changes. The query loop is shared by
 
 - **OpenRouter** — embeddings (`openai/text-embedding-3-small`, paid, ~$2e-7/query) and
   generation (currently a `:free` model, rate-limited/best-effort upstream). Needs
-  `OPENROUTER_API_KEY`.
+  `OPENROUTER_API_KEY_1` (more numbered keys rotate on 429, see `src/sage/openrouter.py`).
 - **Qdrant** — embedded local mode (no server/Docker needed), data at `data/qdrant/`.
 - **Groq / Gemini** (optional) — alternative judge-LLM providers for RAGAS evals, since
   OpenRouter's free tier is too rate-limited for eval runs (8 req/min).

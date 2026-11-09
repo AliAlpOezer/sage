@@ -1,53 +1,51 @@
-# Status — sage
+# Status - sage
 
-Last updated: 2026-07-28
+Last updated: 2026-11-09
 
 ## Current focus
 
-W6 retrieval optimization (Day 37): baseline RAGAS scorecard is in — weakest metric is
-`context_precision` (0.593) — and a reranking stage attacks it via the Cohere Rerank API
-(see `docs/context/decisions.md`, "Reranker is Cohere Rerank API, not local BGE"). Full
-plan and metric→technique mapping: `../../../ai-sprint-vault/Maps/W6 Optimization
-Plan.md` (the vault this repo's exercises build against).
+Turning sage into a showcase (decided 2026-11-09): hybrid retrieval (BM25 sparse + HNSW
+dense in Qdrant) plus GraphRAG on Neo4j, fused with the hand-written RRF. **Cloudflare
+hosting is deferred**: develop locally, free services only. First unblock evals, since
+every retrieval change has to be scored to count.
 
-## In flight
+## State (verified 2026-11-09)
 
-- Reranking stage (Day 37): `Reranker` port + `none`/`bge`/`cohere` adapters +
-  wide-retrieve plumbing in `service.answer()` are wired (see `decisions.md`). The
-  `rerank-cohere` eval variant (`evals/harness.py`) is added but has not yet produced a
-  scored comparison — see Blocked.
+- Golden set `evals/ragset_v1.jsonl` is done: 36 hand-labeled triples (17 easy,
+  14 unanswerable, 4 multi-hop, 1 hard). Empty `source_urls` on u001-u014 is correct.
+- The July-August W6 work (reranker port, BM25 + RRF hybrid, contextual retrieval,
+  OmniRoute generator) and the 2026-11-09 OpenRouter key rotation are committed on
+  branch `w6-hybrid-rerank-contextual` (2026-11-09; not pushed, not merged; it also
+  carries the 4 unmerged commits of `add-context-pack`). 34 tests pass, ruff clean.
+  Still to do: a separate repo-wide `ruff format` commit (23 of 36 files do not match
+  the global ruff config; the repo has no `[tool.ruff]`).
+- Hybrid vs baseline is **unresolved**: hybrid (2026-08-04) scored faithfulness 0.880,
+  answer_relevancy 0.650, context_precision 0.564, context_recall 0.629 vs baseline
+  0.948 / 0.620 / 0.593 / 0.679, but generator and judge both changed between the runs.
+  Re-score both under one judge before any keep/kill call.
 
 ## Blocked
 
-`rerank-bge` remains segfault-blocked (`qdrant_client`+torch in-process conflict —
-`gotchas.md`).
+- `answer_relevancy`, the generate phase and `/ask` need query embeddings, and
+  `openai/text-embedding-3-small` returns 402 on all 8 free-tier keys. Fix: switch to the
+  free `nvidia/nemotron-3.5-embed-1b:free` (2048 dims, verified live), which means
+  re-ingesting into a new collection and a new baseline. Alp's call.
+- `rerank-bge` stays segfault-blocked (`gotchas.md`).
 
 ## Next up
 
-1. `rerank-cohere` generate phase failed 36/36 on two consecutive attempts (2026-07-28),
-   both entirely `429 Too Many Requests` from OpenRouter on the generation model
-   (`nvidia/nemotron-3-super-120b-a12b:free`) — not a Cohere or reranker issue; rerank runs
-   before generation in the pipeline, so the failures are downstream of it. Fixed
-   2026-07-28: `Settings.openrouter_api_key_2` (from `OPENROUTER_API_KEY_2`) is now read by
-   both `OpenRouterGenerator` and `OpenRouterEmbedder` — on a 429 they move to the second
-   key rather than retrying the same exhausted one. Rerun
-   `uv run python -m sage.evals.harness run rerank-cohere` to get the scored comparison.
-2. Once it scores: read `evals/runs/compare.md` for the `context_precision` delta vs the
-   0.593 baseline (target: +0.05–0.10, recall flat). Keep/kill decision either way.
-3. Hybrid search + RRF (Day 36) is next in the W6 plan's attack order — targets
-   `context_recall` (0.679). **Correction (2026-07-28):** earlier notes claimed this was
-   already half-built; verified false via `grep -r "bm25|rrf|hybrid|sparse" src` —
-   zero hits. Unstarted, not partial.
-
-## Recently landed
-
-- Baseline RAGAS scorecard scored 36/36 triples (`evals/scorecard_baseline.md`, run
-  2026-07-25): faithfulness 0.948, answer_relevancy 0.620, context_precision 0.593
-  (weakest — most worst-cases are *correctly-refused* unanswerable questions scoring 0
-  on relevancy, not a generation defect), context_recall 0.679.
-- RAGAS eval harness + labeling tooling: judge/dataset/scorecard, label_helper +
-  build_ragset, config-driven variant harness (top_k / assembly_order / chunker),
-  evals/README (commit `ccc9100`, 2026-07-12).
-- Earlier (per docs/context/sage.md, 2026-07-06): API+UI deploy verified end-to-end
-  (FastAPI `/ask` behind the Atlas Next.js UI); generation model switched to a free
-  OpenRouter model after the account went to negative balance.
+1. Alp is deciding on a one-time $10 OpenRouter credit purchase (free-model cap 50 -> 1,000
+   requests/day, keeps the paid embedder and so the existing baseline valid).
+2. Switch generator + judge to `openrouter` (OmniRoute is not running), pick the embedder
+   (above), make the RAGAS score phase resumable (gotchas option 3), re-score baseline and
+   hybrid under one judge.
+3. Alp labels ~20 more multi-hop questions: with 4 of 36, a GraphRAG win cannot show up
+   in the scorecard. (Labeling is never delegated, see `decisions.md`.)
+4. Native hybrid in Qdrant (sparse vectors with IDF + dense HNSW in one collection);
+   the in-memory `rank_bm25` index rebuilds per process.
+5. Neo4j graph from doc structure first (page links, heading tree, class mentions,
+   zero LLM cost), LLM entity extraction as the paid comparison arm; a GraphRetriever
+   port feeding RRF as a third list. Run a `system-design` pass first.
+6. Machine limit: 3.6 GB RAM, Docker not running. Local Neo4j + Qdrant server will not
+   fit; the free managed tiers (AuraDB Free, Qdrant Cloud free) are the realistic
+   "free" option, and both pause when idle.

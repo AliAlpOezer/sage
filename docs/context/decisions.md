@@ -3,7 +3,40 @@
 One entry per settled decision, newest first — stops an agent from cheerfully
 re-proposing something already rejected.
 
-### Generation model is a free OpenRouter model, not a paid one
+### OpenRouter keys rotate on 429 inside an httpx transport
+Date: 2026-11-09 · Status: settled · revisit-if OpenRouter credit is bought (one key
+with 1,000 free req/day makes rotation moot)
+Keys are numbered `OPENROUTER_API_KEY_1..N` in `.env` (the unnumbered
+`OPENROUTER_API_KEY` is gone). One process-wide pointer marks the current key; a
+key-level 429 moves it to the next number and the last wraps to `_1`, so later requests
+start on the key that last worked. Lives in `src/sage/openrouter.py` as an httpx
+transport, which is the one seam shared by the generator and embedder (plain httpx) and
+the RAGAS judge (OpenAI SDK under langchain_openai, via injected `http_client`).
+Rejected: a per-call key loop in each adapter (the old 2-key version; the judge never
+rotated) and re-reading the env var name per request (same behaviour, more I/O).
+A 429 whose body carries `error.metadata.provider_name` is the model's *provider*
+throttling everyone ("rate-limited upstream"): it is returned without rotating, because
+no key gets past it. Caveat accepted: OpenRouter's limits page says "Making additional
+accounts or API keys will not affect your rate limits", so rotation may buy nothing.
+
+### Reranker is Cohere Rerank API, not local BGE
+Date: 2026-07-28 · Status: settled · revisit-if the bge/qdrant_client in-process crash
+(see `gotchas.md`) gets fixed later
+Originally chose local BGE (all-free, matches the Nemotron/OpenRouter-free pattern) but
+it segfaults on this machine — `qdrant_client` and torch can't coexist in one process,
+proven by bisection, not RAM. Switched to the `cohere` adapter (`adapters/rerank.py`,
+Cohere Rerank v2, model `rerank-v3.5`): no local model, so it sidesteps the conflict
+entirely. Cost accepted: needs a `COHERE_API_KEY` (trial keys support Rerank) and is a
+paid external dependency, breaking the all-free stack for this one stage. The `bge`
+adapter is left registered (unused, documented as blocked) for if the crash gets fixed.
+Day-37 precision stage (baseline `context_precision`=0.593, weakest of the four RAGAS
+metrics — see `evals/scorecard_baseline.md`). Chose local BGE cross-encoder over the
+Cohere Rerank API to keep the stack all-free/no-API-key, matching the existing
+Nemotron/OpenRouter-free pattern. Cost accepted: CPU inference is slow and the model is
+a real download (~600MB); an API-based path (Cohere) would have been faster to stand up
+but adds a paid external dependency. Implemented as a `Reranker` port (`ports.py`) with
+`none` (passthrough, the baseline arm) and `bge` adapters (`adapters/rerank.py`),
+selected via `SAGE_RERANKER` / `settings.reranker`, wide-retrieve via `retrieve_k=30`.
 Date: 2026-07-06 · Status: settled · revisit-if OpenRouter balance goes positive again
 Chose `nvidia/nemotron-3-super-120b-a12b:free` over paid `claude-sonnet-4-6` because the
 OpenRouter account went to -$0.14 balance. `openai/gpt-oss-120b:free` was tried first but

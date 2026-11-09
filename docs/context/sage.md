@@ -73,7 +73,7 @@ head-to-head. Done-when (Day 25): 10 real questions answered end-to-end, failure
   Run: `uv run python -m uvicorn sage.api:app --port 8000`
   (NOTE: `uv run uvicorn ...` fails with os error 5 on this box — use `python -m`.)
 - Deep documentation: docs/wiki/ (OKF-style bundle, maintained via the
-  /document skill at dev/.claude/skills/document/).
+  `document` skill at ~/.agents/skills/document/).
 - Done (Day 27, 2026-07-06): DEPLOY. Both services brought up live — Sage API
   :8000 + Atlas UI :3000 — and E2E cited answers verified through the UI proxy
   (browser → /api/ask → Sage) with 3 real questions. README rewritten for
