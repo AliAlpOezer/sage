@@ -36,8 +36,13 @@ every retrieval change has to be scored to count.
 
 ## Next up
 
-1. Make the RAGAS score phase resumable (gotchas option 3), then re-score baseline and
-   hybrid under one judge (`uv run python -m sage.evals.harness run <variant> --phase score`).
+1. Finish the same-judge re-score (judge `nvidia/nemotron-3.5-super-vl:free`). Scoring is
+   resumable since 2026-11-09 (`evals/runs/<variant>/scores.jsonl`, per-sample, per-judge).
+   State when the run was killed for low RAM: baseline 36/36 scored once, 23 complete
+   (13 have a NaN metric and get retried); hybrid just started. Resume with
+   `uv run python -m sage.evals.harness run baseline --phase score`, then the same for
+   `hybrid`. Run it in a plain terminal: Claude Code reaps background jobs when this
+   3.6 GB machine runs out of memory.
 2. Then score `rerank-cohere` and the contextual arms against that same judge.
 3. Alp labels ~20 more multi-hop questions: with 4 of 36, a GraphRAG win cannot show up
    in the scorecard. (Labeling is never delegated, see `decisions.md`.)
