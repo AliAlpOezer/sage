@@ -135,29 +135,102 @@ def phase_score(name: str, settings: Settings) -> None:
             f"[{name}] score: 0/{len(triples)} triples have cached answers — "
             f"the generate phase produced nothing scoreable (check its FAILED lines above)."
         )
-    samples = [
-        SingleTurnSample(
+    def sample(i: str) -> SingleTurnSample:
+        return SingleTurnSample(
             user_input=triples[i].question,
             response=answers[i]["answer"],
             retrieved_contexts=answers[i]["retrieved_contexts"],
             reference=triples[i].ground_truth,
         )
-        for i in ids
-    ]
-    print(f"[{name}] score: {len(samples)} samples with judge={settings.resolved_judge_model}")
+
+    judge = settings.resolved_judge_model
+    scores_path = _run_dir(name) / "scores.jsonl"
+    scored = _load_scores(scores_path, judge)
+    todo = [i for i in ids if not _score_complete(scored.get(i))]
+    print(
+        f"[{name}] score: {len(ids)} samples, {len(ids) - len(todo)} already scored "
+        f"by judge={judge}, {len(todo)} to score"
+    )
 
     llm, emb = build_judge(settings)
-    result = evaluate(
-        dataset=EvaluationDataset(samples=samples),
-        metrics=default_metrics(),
-        llm=llm,
-        embeddings=emb,
-        run_config=default_run_config(settings),
-    )
-    df = result.to_pandas()
+    dead_batches = 0
+    with scores_path.open("a", encoding="utf-8") as f:
+        for start in range(0, len(todo), SCORE_BATCH):
+            batch = todo[start : start + SCORE_BATCH]
+            result = evaluate(
+                dataset=EvaluationDataset(samples=[sample(i) for i in batch]),
+                metrics=default_metrics(),
+                llm=llm,
+                embeddings=emb,
+                run_config=default_run_config(settings),
+                show_progress=False,
+            )
+            rows = result.to_pandas().to_dict("records")
+            if not any(_num(r.get(c)) is not None for r in rows for c in METRIC_COLS):
+                # Every metric failed: the judge is down or out of quota, not this
+                # batch's fault. Don't spend its attempts; stop after two in a row.
+                dead_batches += 1
+                print(f"  {batch}: every metric failed (judge unreachable or out of quota?)")
+                if dead_batches == 2:
+                    break
+                continue
+            dead_batches = 0
+            for i, r in zip(batch, rows, strict=True):
+                scored[i] = _merge_score(scored.get(i), i, judge, r)
+                f.write(json.dumps(scored[i]) + "\n")
+                f.flush()
+            done = sum(_score_complete(scored.get(i)) for i in ids)
+            print(f"  scored {', '.join(batch)}  ({done}/{len(ids)} complete)")
+
+    incomplete = [i for i in ids if not _score_complete(scored.get(i))]
+    if incomplete:
+        print(f"[{name}] {len(incomplete)} samples incomplete; re-run the score phase to resume.")
+        return
+    df = pd.DataFrame([{c: scored[i][c] for c in METRIC_COLS} for i in ids])
     df.insert(0, "id", ids)
     df["category"] = [triples[i].category for i in ids]
+    df["user_input"] = [triples[i].question for i in ids]
+    df["response"] = [answers[i]["answer"] for i in ids]
     _write_run(name, df, settings, n_total=len(triples))
+
+
+# Score this many samples per RAGAS call, so a quota stop loses one batch, not the run.
+SCORE_BATCH = 4
+# A sample whose metrics stay NaN after this many judge attempts is accepted as NaN
+# (the scorecard reports NaN counts) instead of blocking the scorecard forever.
+MAX_SCORE_ATTEMPTS = 3
+
+
+def _num(value: object) -> float | None:
+    """A metric value as float, or None when it is missing or NaN."""
+    if value is None or pd.isna(value):
+        return None
+    return float(value)
+
+
+def _load_scores(path: Path, judge: str) -> dict[str, dict]:
+    """Latest saved row per sample id, from this judge only (another judge's scores
+    are not comparable, so switching judge re-scores everything)."""
+    rows: dict[str, dict] = {}
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.strip() and (row := json.loads(line))["judge"] == judge:
+                rows[row["id"]] = row
+    return rows
+
+
+def _score_complete(row: dict | None) -> bool:
+    if row is None:
+        return False
+    has_all = all(row.get(c) is not None for c in METRIC_COLS)
+    return has_all or row["attempts"] >= MAX_SCORE_ATTEMPTS
+
+
+def _merge_score(old: dict | None, sample_id: str, judge: str, result: dict) -> dict:
+    """New attempt's values, keeping any metric an earlier attempt already got."""
+    old = old or {}
+    merged = {c: old.get(c) if old.get(c) is not None else _num(result.get(c)) for c in METRIC_COLS}
+    return {"id": sample_id, "judge": judge, "attempts": old.get("attempts", 0) + 1, **merged}
 
 
 def _means(df: pd.DataFrame) -> dict[str, float]:

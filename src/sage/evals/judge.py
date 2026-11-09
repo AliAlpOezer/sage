@@ -125,7 +125,8 @@ def build_judges(settings: Settings | None = None) -> list[tuple[LangchainLLMWra
 def default_run_config(settings: Settings | None = None) -> RunConfig:
     """RunConfig tuned to the judge provider's rate limits.
 
-    OpenRouter free = 8 req/min → must serialize (max_workers=1) or every job 429s.
+    OpenRouter `:free` models allow 20 req/min (limits page, 2026-11-09), and a 429
+    rotates to the next key (`sage.openrouter`), so modest concurrency is safe.
     Groq/Gemini free tiers allow far more (~30 rpm) → modest concurrency is safe and fast.
     OmniRoute has no rate limit of its own — it spreads load over a pool — but its
     upstreams are reasoning models with a slow first token, so the ceiling is wall
@@ -134,7 +135,7 @@ def default_run_config(settings: Settings | None = None) -> RunConfig:
     """
     s = settings or Settings.from_env()
     if s.judge_provider == "openrouter":
-        return RunConfig(max_workers=1, timeout=180, max_retries=8, max_wait=90)
+        return RunConfig(max_workers=3, timeout=180, max_retries=8, max_wait=90)
     if s.judge_provider == "omniroute":
         return RunConfig(max_workers=4, timeout=300, max_retries=6, max_wait=40)
     return RunConfig(max_workers=3, timeout=120, max_retries=6, max_wait=40)

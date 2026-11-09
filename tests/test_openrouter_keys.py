@@ -186,3 +186,31 @@ def test_pools_keep_separate_pointers():
     key_ring(s, "embeddings").rotate_past(0, 402)
     assert key_ring(s, "embeddings").current() == (1, "b")
     assert key_ring(s, "chat").current() == (0, "a")
+
+
+def test_key_level_429_with_null_provider_name_still_rotates():
+    """OpenRouter's own daily cap sends `provider_name: null` (seen live 2026-11-09)."""
+    ring, seen = _ring(2), []
+    daily = {
+        "error": {
+            "code": 429,
+            "message": "Rate limit exceeded: free-models-per-day",
+            "metadata": {
+                "limit_source": "openrouter_free_tier_daily",
+                "provider_name": None,
+            },
+        }
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        key = request.headers["Authorization"].removeprefix("Bearer ")
+        seen.append(key)
+        return (
+            httpx.Response(429, json=daily) if key == "key-1" else httpx.Response(200)
+        )
+
+    with httpx.Client(
+        transport=RotatingKeyTransport(ring, httpx.MockTransport(handler))
+    ) as client:
+        assert client.post(URL, json={}).status_code == 200
+    assert seen == ["key-1", "key-2"]

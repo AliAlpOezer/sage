@@ -107,7 +107,8 @@ def is_upstream_limit(response: httpx.Response) -> bool:
         metadata = response.json()["error"].get("metadata") or {}
     except (ValueError, KeyError, TypeError, AttributeError):
         return False
-    return "provider_name" in metadata
+    # Key-level limits carry the field too, set to null (e.g. free-models-per-day).
+    return bool(metadata.get("provider_name"))
 
 
 class RotatingKeyTransport(httpx.BaseTransport):
