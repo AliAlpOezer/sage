@@ -45,6 +45,32 @@ class VectorStore(Protocol):
 
 
 @runtime_checkable
+class SparseRetriever(Protocol):
+    def search(self, query: str, k: int) -> list[ScoredChunk]:
+        """Keyword-match `query` against the corpus; return top-k, best-first.
+
+        The lexical counterpart to `VectorStore.search` (semantic/dense). Used
+        for hybrid retrieval: the caller runs both and fuses the two ranked
+        lists (see `sage.adapters.rrf.fuse`) rather than trusting either alone.
+        """
+        ...
+
+
+@runtime_checkable
+class Reranker(Protocol):
+    def rerank(self, question: str, chunks: Sequence[ScoredChunk]) -> list[ScoredChunk]:
+        """Re-score `chunks` against `question` and return them sorted best-first.
+
+        Day-37 precision stage: the first-stage retriever fetches a wide candidate
+        set (`settings.retrieve_k`); this reorders it with an accurate cross-encoder.
+        The returned `ScoredChunk.score` carries the reranker's relevance score
+        (not the original vector similarity), and the caller keeps only the top
+        `settings.top_k`. Returning fewer than given is allowed; returning more is not.
+        """
+        ...
+
+
+@runtime_checkable
 class Generator(Protocol):
     def generate(self, question: str, context: Sequence[ScoredChunk]) -> str:
         """Answer the question grounded only in the given context chunks."""

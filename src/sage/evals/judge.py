@@ -1,35 +1,44 @@
-"""Wire RAGAS's judge LLM + embeddings to OpenRouter.
+"""Wire RAGAS's judge LLM + embeddings to an OpenAI-compatible endpoint.
 
 RAGAS needs two model handles:
 - an LLM judge  — decomposes claims / runs NLI / scores relevance (faithfulness,
   answer relevancy, context precision, context recall all call it)
 - an embeddings model — answer relevancy embeds generated questions vs. the original
 
-Both point at OpenRouter's OpenAI-compatible endpoints, reusing the one key. The
-judge model is free by default (see config.judge_model) because the account balance
-is negative; a free judge can be flaky on structured output, which is exactly why the
-protocol audits 20% of verdicts by hand.
+The judge defaults to the local **OmniRoute** gateway: no key, no per-key quota, and
+it pools several providers' free endpoints, which is what makes a full four-metric
+RAGAS run finish at all. OpenRouter's free tier caps at ~8 req/min and was 429ing
+whole runs.
+
+Embeddings stay on OpenRouter: OmniRoute's `/v1/embeddings` route rejects the
+placeholder key (its free pool is chat-only), and the paid text-embedding-3-small
+call is tiny (~$2e-7). A free judge can be flaky on structured output either way,
+which is exactly why the protocol audits 20% of verdicts by hand.
 """
+
+from typing import Any
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from ragas.llms import LangchainLLMWrapper
-from ragas.run_config import RunConfig
 from ragas.metrics import (
     Faithfulness,
     LLMContextPrecisionWithReference,
     LLMContextRecall,
     ResponseRelevancy,
 )
+from ragas.run_config import RunConfig
 
-from sage.config import Settings
+from sage import openrouter
+from sage.config import OMNIROUTE_API_KEY, Settings
 
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+_JUDGE_TIMEOUT = 300
 
-# Judge LLM providers, all OpenAI-compatible. OpenRouter's free tier caps at 8 req/min
-# (too slow for RAGAS); groq/gemini have real free tiers with much higher rpm + low latency.
-_JUDGE_PROVIDERS = {
-    "openrouter": (OPENROUTER_BASE_URL, "openrouter_api_key", "OPENROUTER_API_KEY"),
+# Keyed judge providers, all OpenAI-compatible: (base_url, settings attr, env name).
+# `omniroute` (keyless local gateway) and `openrouter` (rotating OPENROUTER_API_KEY_<n>,
+# see `sage.openrouter`) are wired separately in `judge_endpoint`.
+# groq/gemini have real free tiers with much higher rpm + low latency.
+_KEYED_PROVIDERS: dict[str, tuple[str, str, str]] = {
     "groq": ("https://api.groq.com/openai/v1", "groq_api_key", "GROQ_API_KEY"),
     "gemini": (
         "https://generativelanguage.googleapis.com/v1beta/openai/",
@@ -37,52 +46,62 @@ _JUDGE_PROVIDERS = {
         "GEMINI_API_KEY",
     ),
 }
+_JUDGE_PROVIDERS = ("omniroute", "openrouter", *_KEYED_PROVIDERS)
 
 
 def _build_embeddings(settings: Settings) -> LangchainEmbeddingsWrapper:
-    if not settings.openrouter_api_key:
-        raise RuntimeError("OPENROUTER_API_KEY missing — needed for judge embeddings.")
     emb = OpenAIEmbeddings(
         model=settings.embedding_model,
-        api_key=settings.openrouter_api_key,
-        base_url=OPENROUTER_BASE_URL,
         # OpenRouter model ids ("openai/text-embedding-3-small") aren't known to
         # tiktoken; skip the client-side context-length tokenization it would need.
         check_embedding_ctx_length=False,
+        **openrouter.openai_kwargs(settings, timeout=60),
     )
     return LangchainEmbeddingsWrapper(emb)
 
 
-def _build_chat(settings: Settings, base_url: str, key: str) -> LangchainLLMWrapper:
+def _build_chat(settings: Settings, endpoint: dict[str, Any]) -> LangchainLLMWrapper:
     chat = ChatOpenAI(
-        model=settings.judge_model,
-        api_key=key,
-        base_url=base_url,
+        model=settings.resolved_judge_model,
+        **endpoint,
         temperature=0.0,
-        timeout=120,
+        # Reasoning models spend this ceiling thinking before emitting the verdict;
+        # too low and RAGAS parses an empty string and records NaN.
+        max_tokens=settings.judge_max_tokens,
+        timeout=_JUDGE_TIMEOUT,
         max_retries=3,
     )
     return LangchainLLMWrapper(chat)
 
 
+def judge_endpoint(settings: Settings) -> dict[str, Any]:
+    """ChatOpenAI connection kwargs (base_url, api_key, ...) for the judge provider."""
+    provider = settings.judge_provider
+    if provider == "omniroute":  # keyless local gateway
+        return {"base_url": settings.omniroute_base_url, "api_key": OMNIROUTE_API_KEY}
+    if provider == "openrouter":
+        return openrouter.openai_kwargs(settings, timeout=_JUDGE_TIMEOUT)
+    if provider not in _KEYED_PROVIDERS:
+        raise RuntimeError(
+            f"unknown SAGE_JUDGE_PROVIDER={provider!r}; expected one of {sorted(_JUDGE_PROVIDERS)}"
+        )
+    base_url, key_attr, env_name = _KEYED_PROVIDERS[provider]
+    key = getattr(settings, key_attr)
+    if not key:
+        raise RuntimeError(f"{env_name} missing — needed for judge_provider={provider}.")
+    return {"base_url": base_url, "api_key": key}
+
+
 def build_judge(settings: Settings | None = None):
     """Return (llm, embeddings) RAGAS wrappers.
 
-    Judge LLM is routed by settings.judge_provider. Embeddings (needed by
-    answer_relevancy) always go through OpenRouter's paid text-embedding-3-small —
-    it's tiny (~$2e-7/call) and Groq offers no embeddings endpoint.
+    Judge LLM is routed by settings.judge_provider (default: the local OmniRoute
+    gateway). Embeddings (needed by answer_relevancy) always go through OpenRouter's
+    paid text-embedding-3-small — it's tiny (~$2e-7/call), and neither Groq nor
+    OmniRoute's free pool offers an embeddings endpoint.
     """
     s = settings or Settings.from_env()
-    if s.judge_provider not in _JUDGE_PROVIDERS:
-        raise RuntimeError(
-            f"unknown SAGE_JUDGE_PROVIDER={s.judge_provider!r}; "
-            f"expected one of {sorted(_JUDGE_PROVIDERS)}"
-        )
-    base_url, key_attr, env_name = _JUDGE_PROVIDERS[s.judge_provider]
-    key = getattr(s, key_attr)
-    if not key:
-        raise RuntimeError(f"{env_name} missing — needed for judge_provider={s.judge_provider}.")
-    return _build_chat(s, base_url, key), _build_embeddings(s)
+    return _build_chat(s, judge_endpoint(s)), _build_embeddings(s)
 
 
 def build_judges(settings: Settings | None = None) -> list[tuple[LangchainLLMWrapper, LangchainEmbeddingsWrapper]]:
@@ -97,9 +116,9 @@ def build_judges(settings: Settings | None = None) -> list[tuple[LangchainLLMWra
     s = settings or Settings.from_env()
     if s.judge_provider == "groq" and s.groq_api_keys:
         keys = [s.groq_api_key, *s.groq_api_keys] if s.groq_api_key else list(s.groq_api_keys)
-        base_url, _, _ = _JUDGE_PROVIDERS["groq"]
+        base_url, _, _ = _KEYED_PROVIDERS["groq"]
         emb = _build_embeddings(s)
-        return [(_build_chat(s, base_url, k), emb) for k in keys]
+        return [(_build_chat(s, {"base_url": base_url, "api_key": k}), emb) for k in keys]
     return [build_judge(s)]
 
 
@@ -108,11 +127,16 @@ def default_run_config(settings: Settings | None = None) -> RunConfig:
 
     OpenRouter free = 8 req/min → must serialize (max_workers=1) or every job 429s.
     Groq/Gemini free tiers allow far more (~30 rpm) → modest concurrency is safe and fast.
+    OmniRoute has no rate limit of its own — it spreads load over a pool — but its
+    upstreams are reasoning models with a slow first token, so the ceiling is wall
+    clock, not quota: modest concurrency and a long per-call timeout.
     Retries + backoff absorb the occasional token-per-minute 429.
     """
     s = settings or Settings.from_env()
     if s.judge_provider == "openrouter":
         return RunConfig(max_workers=1, timeout=180, max_retries=8, max_wait=90)
+    if s.judge_provider == "omniroute":
+        return RunConfig(max_workers=4, timeout=300, max_retries=6, max_wait=40)
     return RunConfig(max_workers=3, timeout=120, max_retries=6, max_wait=40)
 
 

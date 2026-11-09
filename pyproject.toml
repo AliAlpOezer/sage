@@ -12,6 +12,7 @@ dependencies = [
     "httpx>=0.28.1",
     "python-dotenv>=1.2.2",
     "qdrant-client>=1.18.0",
+    "rank-bm25>=0.2.2",
     "uvicorn>=0.34.0",
 ]
 
@@ -26,10 +27,16 @@ build-backend = "uv_build"
 dev = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "ruff>=0.14.0",
 ]
 eval = [
     "langchain-community<0.4",
     "langchain-core<0.4",
     "langchain-openai<0.3",
     "ragas>=0.2,<0.3",
+]
+rerank = [
+    # Day-37 BGE cross-encoder reranker. Pulls torch (CPU) — heavy; install only
+    # when running the reranker:  uv sync --group rerank
+    "sentence-transformers>=3.0",
 ]

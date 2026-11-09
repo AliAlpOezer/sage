@@ -20,7 +20,7 @@ Query-time knobs (top_k, assembly order) reuse the baseline collection — cheap
 import argparse
 import json
 from dataclasses import replace
-from datetime import date
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -44,9 +44,29 @@ VARIANTS: dict[str, tuple[dict, str]] = {
     "assembly-naive": ({"assembly_order": "naive"}, "pure score order (Day-33 reorder control)"),
     "topk-3": ({"top_k": 3}, "fewer chunks: precision up, recall risk"),
     "topk-8": ({"top_k": 8}, "more chunks: recall up, precision/cost risk"),
+    "rerank-bge": (
+        {"reranker": "bge", "retrieve_k": 30},
+        "Day-37 precision stage, local BGE -- BLOCKED on this machine, see gotchas.md",
+    ),
+    "rerank-cohere": (
+        {"reranker": "cohere", "retrieve_k": 30},
+        "Day-37 precision stage: retrieve 30 -> Cohere Rerank v2 -> keep top_k",
+    ),
     "chunk-fixed": (
         {"chunker": "fixed", "collection": "langchain-docs-fixed"},
         "fixed-size chunks, structure-blind (needs ingest)",
+    ),
+    "hybrid": (
+        {"sparse_retriever": "bm25", "retrieve_k": 30},
+        "Day-36: dense + BM25 -> RRF fusion (targets context_recall)",
+    ),
+    "structural": (
+        {"chunker": "structural", "collection": "langchain-docs-structural"},
+        "Day-38 free control: heading-breadcrumb prefix, no LLM (needs ingest)",
+    ),
+    "contextual": (
+        {"chunker": "contextual", "collection": "langchain-docs-contextual"},
+        "Day-38: LLM page blurb + breadcrumb prefix before embedding (needs ingest)",
     ),
     # "chunk-semantic": stretch goal — needs a hand-written semantic chunker
     # (embedding-based boundary detection). Own it yourself, then register
@@ -110,6 +130,11 @@ def phase_score(name: str, settings: Settings) -> None:
             answers[rec["id"]] = rec
 
     ids = [i for i in triples if i in answers]
+    if not ids:
+        raise SystemExit(
+            f"[{name}] score: 0/{len(triples)} triples have cached answers — "
+            f"the generate phase produced nothing scoreable (check its FAILED lines above)."
+        )
     samples = [
         SingleTurnSample(
             user_input=triples[i].question,
@@ -119,7 +144,7 @@ def phase_score(name: str, settings: Settings) -> None:
         )
         for i in ids
     ]
-    print(f"[{name}] score: {len(samples)} samples with judge={settings.judge_model}")
+    print(f"[{name}] score: {len(samples)} samples with judge={settings.resolved_judge_model}")
 
     llm, emb = build_judge(settings)
     result = evaluate(
@@ -151,10 +176,14 @@ def _write_run(name: str, df: pd.DataFrame, settings: Settings, n_total: int) ->
     lines = [
         f"# Scorecard — {name}",
         f"_{desc}_",
-        f"Run: {date.today().isoformat()}  ·  scored {len(df)}/{n_total} triples  ·  judge `{settings.judge_model}`",
+        f"Run: {datetime.now().astimezone().date().isoformat()}  ·  scored {len(df)}/{n_total} triples  ·  judge `{settings.resolved_judge_model}`",
         "",
-        f"Config: chunker=`{settings.chunker}` top_k={settings.top_k} "
-        f"assembly=`{settings.assembly_order}` collection=`{settings.collection}`",
+        (
+            f"Config: chunker=`{settings.chunker}` top_k={settings.top_k} "
+            f"assembly=`{settings.assembly_order}` reranker=`{settings.reranker}`"
+            f"{f' retrieve_k={settings.retrieve_k}' if settings.reranker != 'none' else ''} "
+            f"collection=`{settings.collection}`"
+        ),
         "",
         "| metric | stage | mean |",
         "|---|---|---|",
@@ -169,13 +198,15 @@ def _write_run(name: str, df: pd.DataFrame, settings: Settings, n_total: int) ->
     RUNS_DIR.mkdir(parents=True, exist_ok=True)
     row = {
         "run": name,
-        "date": date.today().isoformat(),
+        "date": datetime.now().astimezone().date().isoformat(),
         "n": len(df),
         "means": {c: round(means[c], 4) for c in present},
         "config": {
             "chunker": settings.chunker,
             "top_k": settings.top_k,
             "assembly_order": settings.assembly_order,
+            "reranker": settings.reranker,
+            "retrieve_k": settings.retrieve_k,
             "collection": settings.collection,
         },
     }
