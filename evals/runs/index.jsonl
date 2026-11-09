@@ -1,0 +1,1 @@
+{"run": "hybrid", "date": "2026-08-04", "n": 36, "means": {"faithfulness": 0.8796, "answer_relevancy": 0.6499, "llm_context_precision_with_reference": 0.5643, "context_recall": 0.6286}, "config": {"chunker": "recursive", "top_k": 5, "assembly_order": "edges", "reranker": "none", "retrieve_k": 30, "collection": "langchain-docs"}}
