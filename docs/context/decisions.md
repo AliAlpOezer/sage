@@ -70,7 +70,21 @@ Chose the sitemap (1418 URLs, append `.md` for markdown) over `llms.txt` because
 ### Corpus scope is `/oss/python/` only
 Date: 2026-07-04 · Status: settled · revisit-if the JS docs become in-scope
 185 of 1418 sitemap pages (~1.2M tokens, ~$0.025 to embed) — the LangChain 1.0 Python
-docs the sprint targets. Excludes the JS mirror. Configurable via `SAGE_DOCS_URL_PREFIX`.
+docs the sprint targets. Excludes the JS mirror. Since 2026-11-10 this is the scope of
+the `langchain` source and of the evals only (see next entry).
+
+### Corpus is four doc sites; evals stay on LangChain
+Date: 2026-11-10 · Status: settled (Alp) · revisit-if a golden set exists for the other sites
+The app answers over LangChain, Langfuse, Qdrant and Neo4j docs (`SAGE_SOURCES`, registry
+in `src/sage/sources.py`), in one collection `tech-docs`. Scope per site: Langfuse
+`/docs`, `/integrations`, `/self-hosting`; Qdrant `/documentation/`; Neo4j
+getting-started, Cypher manual, Python driver manual, GenAI plugin (the full Neo4j docs
+are 50+ manuals; local-mode Qdrant degrades past ~20k points). The 36-question golden
+set was labeled on LangChain alone, so the harness pins every variant to the frozen
+`langchain-docs` collection: scores stay comparable, but they say nothing about answer
+quality on the three new sites. Rejected: one collection for both (new chunks become
+distractors and silently shift every score); a collection per site (needs query routing
+before any cross-site question works).
 
 ### Built from scratch, no RAG framework
 Date: 2026-07-04 · Status: settled

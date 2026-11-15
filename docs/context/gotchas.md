@@ -127,3 +127,52 @@ Cause: a chunker variant produces different chunks/ids than the baseline collect
 scoring without re-indexing scores against the wrong collection.
 Fix: run `sage.evals.harness ingest <variant>` first (costs embedding $), then `run
 <variant>`. Query-only knobs (`top_k`, `assembly_order`) reuse baseline, no re-index.
+
+### Eval or `sage.ask` fails with `APIConnectionError` on every call
+Cause: `.env` selects `omniroute` (the local gateway at 127.0.0.1:20128, not running),
+so the judge resolves to `auto/best-free`. Seen 2026-11-10: `.env` had gone back to
+omniroute at 21:49 on 2026-11-09, minutes after a status note said it was on openrouter;
+what rewrote it is unknown.
+Fix: check the first line the harness prints (`judge=...`). It must name the judge already
+in `evals/runs/<variant>/scores.jsonl`, or every sample is re-scored from zero. Process
+env vars beat `.env` (`load_dotenv()` does not override), handy for a one-off run.
+
+### Neo4j doc pages are skipped with `403 Forbidden` during ingest
+Cause: neo4j.com rate-limits by request count. On 2026-11-10 a crawl 8 requests wide got
+about 213 pages, then 403 on the rest; with the corpus grown to 424 Neo4j pages, 2 wide
+with no pause still lost 81. The same URLs answer 200 one at a time, with any user agent.
+The block lasts minutes: retries after 2/4/8 s did not clear it.
+A third crawl at under 2 requests/s got only 74 of 424: the limit is a request budget
+(roughly 200 per window of several minutes), not a rate, and back-to-back crawls spend it.
+Fix (2026-11-10): the loader caches every fetched page in `data/pages`
+(`SAGE_PAGE_CACHE`) and stops requesting a source once a page is refused three times,
+printing how many pages are left. Re-run the same ingest later; each run fetches only
+what is missing. `max_concurrency=2`, `fetch_delay=1.0` on the Neo4j sources stay as
+politeness. Delete `data/pages` to pick up changed docs.
+
+### Background eval or ingest jobs die without an error on this machine
+Cause: Claude Code stops background shell jobs when the 3.6 GB machine is critically low
+on memory while the session is idle (seen 2026-11-09 and twice on 2026-11-10). The job
+is not at fault and its log just ends.
+Fix: every phase resumes (answers, scores and ingest are all append/idempotent), so
+re-run the same command. For long runs use a plain terminal outside Claude Code.
+
+### Zero context recall does not always mean a retrieval miss
+On 2026-11-10 e024 and e027 scored context_recall 0 although the labeled source page was
+in the top 5: the hand-written ground truth states things in words the chunks do not
+contain. The scorecard's `source page retrieved` line (URL match, no judge) is the check
+for an actual miss. Real misses that day: e001, e002, e003, e005, h002 on baseline;
+e002, e005, h002 are missed by baseline, hybrid and rerank-cohere alike.
+
+### Doc sites serve markdown three different ways
+LangChain and Langfuse: append `.md`. Qdrant: append `/index.md` (`.md` is a 404, and
+`Accept: text/markdown` returns HTML with a 200). Neo4j: no markdown URL at all, only
+`Accept: text/markdown`, and no docs-wide sitemap, one per manual
+(`/docs/<manual>/current/sitemap.xml`). Verified 2026-11-10. Neo4j's markdown is converted
+HTML, so `sources.clean_neo4j` cuts the nav above the H1 and everything from the license line.
+
+### `uv sync` breaks the evals with `ModuleNotFoundError: pandas` / `ragas`
+Cause: ragas, pandas and the langchain packages live in the non-default `eval`
+dependency group. A plain `uv sync` is exact and uninstalls them (seen 2026-11-10 after
+a lock upgrade); `uv run` alone never removes them, which hides the problem.
+Fix: `uv sync --group eval`.

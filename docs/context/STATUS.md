@@ -1,6 +1,6 @@
 # Status - sage
 
-Last updated: 2026-11-09
+Last updated: 2026-11-15
 
 ## Current focus
 
@@ -8,6 +8,10 @@ Turning sage into a showcase (decided 2026-11-09): hybrid retrieval (BM25 sparse
 dense in Qdrant) plus GraphRAG on Neo4j, fused with the hand-written RRF. **Cloudflare
 hosting is deferred**: develop locally, free services only. First unblock evals, since
 every retrieval change has to be scored to count.
+
+Alp, 2026-11-10: tired of the project stalling on the baseline score since August. Evals
+run in the background and must not block feature work. Same day he decided the corpus
+grows to four doc sites (LangChain, Langfuse, Qdrant, Neo4j).
 
 ## State (verified 2026-11-09)
 
@@ -19,16 +23,94 @@ every retrieval change has to be scored to count.
   carries the 4 unmerged commits of `add-context-pack`). 34 tests pass, ruff clean.
   Still to do: a separate repo-wide `ruff format` commit (23 of 36 files do not match
   the global ruff config; the repo has no `[tool.ruff]`).
+- Multi-source corpus (2026-11-10, uncommitted on this branch): `src/sage/sources.py`
+  registry + per-source loader + batched ingest (512 chunks per round). Collection
+  `tech-docs` holds 19,401 vectors from all 1,106 pages (192 LangChain incl. 37 LangGraph,
+  326 Langfuse, 360 Qdrant, 228 Neo4j). The harness pins evals to the frozen
+  `langchain-docs` collection (`EVAL_CORPUS`). 49 tests pass, ruff clean. Verified with a
+  real `sage.ask` question per new site. No golden questions exist for the three new
+  sites. The collection sits at embedded Qdrant's ~20k-point comfort limit: more sources
+  (candidates offered to Alp: neo4j-graphrag-python, Neo4j GDS, RAGAS, OpenRouter; no
+  pick yet) need the Qdrant server/cloud move first.
 - OpenRouter is the working route (2026-11-09): `$10` credit bought on the account of
   `OPENROUTER_API_KEY_2` (total_credits 10, so 1,000 free-model requests/day). `.env` has
-  `SAGE_GENERATOR=openrouter` and `SAGE_JUDGE_PROVIDER=openrouter`. Paid query embeddings
+  `SAGE_GENERATOR=openrouter`, `SAGE_JUDGE_PROVIDER=openrouter`, the nemotron judge model,
+  `SAGE_COLLECTION=tech-docs` and all four `SAGE_SOURCES` (set 2026-11-10; on 2026-11-09
+  the file had silently gone back to omniroute, see `gotchas.md`). Paid query embeddings
   402 on the other keys and rotate to key 2 (own `embeddings` key pointer); chat calls use
   `:free` models and walk keys 1..8, so credit is only spent on embeddings (cents).
   Verified with a real `sage.ask` question end to end.
-- Hybrid vs baseline is **unresolved**: hybrid (2026-08-04) scored faithfulness 0.880,
-  answer_relevancy 0.650, context_precision 0.564, context_recall 0.629 vs baseline
-  0.948 / 0.620 / 0.593 / 0.679, but generator and judge both changed between the runs.
-  Re-score both under one judge before any keep/kill call.
+- Superseded by the 2026-11-15 evals below. Hybrid vs baseline, same judge (`nvidia/nemotron-3.5-super-vl:free`, 2026-11-10, n=36,
+  `evals/runs/compare.md`): baseline faithfulness 0.849, answer_relevancy 0.610,
+  context_precision 0.501, context_recall 0.611; hybrid 0.887 / 0.537 / 0.501 / 0.630.
+  Retrieval is a tie (precision equal, recall +0.019 is noise at n=36), so BM25 + RRF
+  shows no measurable gain on this set. The two generation metrics are not attributable
+  to retrieval: the cached answers came from different generators (hybrid 2026-08-04,
+  baseline 2026-08-12) and `answers.jsonl` does not record which. One baseline sample has
+  no faithfulness/relevancy score. The judge needs `SAGE_JUDGE_MAX_TOKENS=16000`: at
+  4000 it truncated 20 calls in one pass (not yet in `.env`).
+
+- Why the means look poor (2026-11-10, per-category from `details.csv`): the 14 unanswerable
+  questions score answer_relevancy ~0.26, precision ~0.15, recall ~0.41 by construction
+  (RAGAS rates a correct refusal as irrelevant; there is no context to find). Answerable
+  only (n=22): baseline 0.864 / 0.841 / 0.720 / 0.727, hybrid 0.971 / 0.722 / 0.727 / 0.780.
+  Real defects: baseline e030 answer is `<unk>` garbage from the free generator; baseline
+  e001, e024, e027 have zero context recall. Open: score unanswerables with an
+  abstention check instead of RAGAS, record the generator model in `answers.jsonl`,
+  regenerate both arms with one generator.
+- Qdrant Cloud move (Alp 2026-11-10: yes if free; OpenRouter docs not wanted): free tier
+  is 1 GB RAM / 4 GB disk, no card, suspended after 1 week unused, deleted after 4 weeks
+  inactive (Qdrant docs, checked 2026-11-10). Code is ready: `SAGE_QDRANT_URL` +
+  `QDRANT_API_KEY` switch `QdrantStore` to a remote cluster; evals stay on the local
+  store. Waiting on Alp to create the cluster. Then add neo4j-graphrag-python, Neo4j GDS
+  and RAGAS docs as sources (their markdown access is unprobed).
+
+- Authorized by Alp 2026-11-10 ("do all those suggestions", and do his side via Chrome
+  where possible): (1) score unanswerables by abstention check, RAGAS on answerable only;
+  (2) record generator model in `answers.jsonl`, regenerate baseline + hybrid with one
+  generator; (3) score `rerank-cohere`; (4) inspect zero-recall e001/e024/e027 by hand;
+  (5) create the free Qdrant Cloud cluster, put `SAGE_QDRANT_URL`/`QDRANT_API_KEY` in
+  `.env`, re-ingest there; (6) add neo4j-graphrag-python, Neo4j GDS, RAGAS docs. Labeling
+  more questions stays Alp's. Nothing committed yet; commits were not requested.
+
+- State 2026-11-10 ~16:30 local, all uncommitted on this branch:
+  - Harness: unanswerables scored by abstention (`evals/abstention.py`), RAGAS means on
+    answerable only, judge-free `source page retrieved` line, `generator` recorded in
+    `answers.jsonl`, scores bound to the answer by hash, `SAGE_JUDGE_MAX_TOKENS=16000`.
+  - baseline, hybrid, rerank-cohere each have 36 answers from
+    `nvidia/nemotron-3.5-super-vl:free`. Scoring was started in the background (log:
+    session scratchpad `evals4.log`); if it died, resume per variant with
+    `uv run python -m sage.evals.harness run <variant> --phase score`, then `compare`.
+    Free-model quota (resets 00:00 UTC) may run out mid-way; the phase resumes.
+  - Labeled source page in top 5 (answerable n=22): baseline 17, hybrid 16,
+    rerank-cohere 17. Missed by all three: e002, e005, h002 (check labels/chunking).
+  - Corpus in the cluster (page counts checked 2026-11-10): 24,218 vectors, 1,361 pages:
+    LangChain 192, Langfuse 326, Qdrant 360, RAGAS 133 (11 of 144 have no `/index.md`),
+    Neo4j Cypher 162, getting-started 42, Python driver 14, GenAI plugin 10, GraphRAG
+    package 7 (all complete), Graph Data Science 115 of 189. Only GDS is incomplete:
+    Neo4j's request budget (see `gotchas.md`) lets about 75 pages through per run now.
+    The loader caches pages in `data/pages` and stops at a sustained refusal, so repeat
+    `SAGE_SOURCES=neo4j uv run python -m sage.ingest` a few times, spaced apart, until it
+    reports 417 of 417. `.env` `SAGE_SOURCES` lists all six sources. 55 tests pass.
+  - Qdrant Cloud is live (2026-11-10): Alp created a free AWS cluster; `.env` has
+    `SAGE_QDRANT_URL` + `QDRANT_API_KEY` (he first saved them as `QDRANT_API_ENDPOINT` /
+    `QDRANT_SECRET`; renamed). The local `tech-docs` collection was copied point for
+    point (24,216 vectors, no re-embedding) and retrieval against the cluster verified.
+    The app and `sage.ingest` now use the cluster; evals still use local `langchain-docs`.
+    `qdrant-client` upgraded 1.18 -> 1.20 to match the server (`uv.lock`). Free clusters
+    suspend after 1 week unused and are deleted after 4 weeks inactive.
+  - Evals complete 2026-11-15 (`evals/runs/compare.md`), one generator and judge
+    (nemotron free), answerable n=22, faithfulness / answer_relevancy /
+    context_precision / context_recall / source page in top 5:
+    baseline 0.967 / 0.781 / 0.656 / 0.720 / 0.773;
+    hybrid 0.951 / 0.734 / 0.797 / 0.735 / 0.727;
+    rerank-cohere 0.961 / 0.723 / 0.896 / 0.759 / 0.773. All three declined 14/14
+    unanswerable. Reranking gives the clearest gain (precision +0.240); hybrid +0.141
+    precision but finds the labeled page less often. n=22, so treat deltas under ~0.05
+    as noise. Answer relevancy drops on both arms; not yet inspected.
+  - Committed 2026-11-15: `7d55d15` (six sources + Qdrant Cloud), `459ce8c` (abstention
+    scoring, generator pinning), plus the eval runs and this file. Not pushed.
+  - `docs/wiki/` still describes the single-site loader; needs a `/document` pass.
 
 ## Blocked
 
@@ -36,14 +118,8 @@ every retrieval change has to be scored to count.
 
 ## Next up
 
-1. Finish the same-judge re-score (judge `nvidia/nemotron-3.5-super-vl:free`). Scoring is
-   resumable since 2026-11-09 (`evals/runs/<variant>/scores.jsonl`, per-sample, per-judge).
-   State when the run was killed for low RAM: baseline 36/36 scored once, 23 complete
-   (13 have a NaN metric and get retried); hybrid just started. Resume with
-   `uv run python -m sage.evals.harness run baseline --phase score`, then the same for
-   `hybrid`. Run it in a plain terminal: Claude Code reaps background jobs when this
-   3.6 GB machine runs out of memory.
-2. Then score `rerank-cohere` and the contextual arms against that same judge.
+1. Keep/kill call on hybrid and rerank-cohere is Alp's (scores in State).
+2. Score the contextual arms against the same generator and judge.
 3. Alp labels ~20 more multi-hop questions: with 4 of 36, a GraphRAG win cannot show up
    in the scorecard. (Labeling is never delegated, see `decisions.md`.)
 4. Native hybrid in Qdrant (sparse vectors with IDF + dense HNSW in one collection);
