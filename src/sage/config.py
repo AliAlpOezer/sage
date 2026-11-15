@@ -83,6 +83,10 @@ class Settings:
     fetch_concurrency: int = 8
     vector_store: str = "qdrant"
     qdrant_path: str = "data/qdrant"
+    # Set to a Qdrant server or Qdrant Cloud cluster URL to use it instead of the
+    # embedded file store at qdrant_path.
+    qdrant_url: str = ""
+    qdrant_api_key: str = ""
     collection: str = "langchain-docs"
     assembly_order: str = "edges"  # edges | naive (Day-33 Lost-in-the-Middle knob)
     sparse_retriever: str = "none"  # none | bm25 (Day-36 hybrid search). "none" = dense-only baseline.
@@ -102,8 +106,8 @@ class Settings:
     groq_api_key: str = ""
     groq_api_keys: tuple[str, ...] = ()  # extra keys from separate orgs, splits judge load
     gemini_api_key: str = ""
-    docs_index_url: str = "https://docs.langchain.com/sitemap.xml"
-    docs_url_prefix: str = "https://docs.langchain.com/oss/python/"
+    sources: tuple[str, ...] = ("langchain",)  # names from sage.sources.SOURCES
+    page_cache: str = "data/pages"  # fetched doc pages, reused across ingests; "" = off
     top_k: int = 5
 
     @property
@@ -143,6 +147,8 @@ class Settings:
             fetch_concurrency=int(os.getenv("SAGE_FETCH_CONCURRENCY", str(d.fetch_concurrency))),
             vector_store=os.getenv("SAGE_VECTOR_STORE", d.vector_store),
             qdrant_path=os.getenv("SAGE_QDRANT_PATH", d.qdrant_path),
+            qdrant_url=os.getenv("SAGE_QDRANT_URL", d.qdrant_url),
+            qdrant_api_key=os.getenv("QDRANT_API_KEY", d.qdrant_api_key),
             collection=os.getenv("SAGE_COLLECTION", d.collection),
             assembly_order=os.getenv("SAGE_ASSEMBLY_ORDER", d.assembly_order),
             sparse_retriever=os.getenv("SAGE_SPARSE_RETRIEVER", d.sparse_retriever),
@@ -164,7 +170,9 @@ class Settings:
                 k.strip() for k in os.getenv("GROQ_API_KEYS", "").split(",") if k.strip()
             ),
             gemini_api_key=os.getenv("GEMINI_API_KEY", d.gemini_api_key),
-            docs_index_url=os.getenv("SAGE_DOCS_INDEX_URL", d.docs_index_url),
-            docs_url_prefix=os.getenv("SAGE_DOCS_URL_PREFIX", d.docs_url_prefix),
+            sources=tuple(
+                n.strip() for n in os.getenv("SAGE_SOURCES", ",".join(d.sources)).split(",") if n.strip()
+            ),
+            page_cache=os.getenv("SAGE_PAGE_CACHE", d.page_cache),
             top_k=int(os.getenv("SAGE_TOP_K", str(d.top_k))),
         )

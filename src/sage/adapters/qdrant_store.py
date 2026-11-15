@@ -1,4 +1,4 @@
-"""VectorStore adapter: Qdrant in embedded local mode (no server, file-backed)."""
+"""VectorStore adapter: Qdrant, embedded local mode (file-backed) or a remote server."""
 
 import atexit
 from collections.abc import Sequence
@@ -11,10 +11,16 @@ from sage.factory import register_vector_store
 from sage.models import Chunk, ScoredChunk
 
 
+def connect(settings: Settings) -> QdrantClient:
+    if settings.qdrant_url:
+        return QdrantClient(url=settings.qdrant_url, api_key=settings.qdrant_api_key or None, timeout=60)
+    return QdrantClient(path=settings.qdrant_path)
+
+
 @register_vector_store("qdrant")
 class QdrantStore:
     def __init__(self, settings: Settings):
-        self.client = QdrantClient(path=settings.qdrant_path)
+        self.client = connect(settings)
         # Close before interpreter teardown: otherwise QdrantClient.__del__ runs after
         # sys.meta_path is gone and prints an ImportError traceback on every exit.
         atexit.register(self.client.close)

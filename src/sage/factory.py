@@ -94,7 +94,7 @@ def make_embedder(settings: Settings) -> Embedder:
 
 def make_vector_store(settings: Settings) -> VectorStore:
     _load_adapters()
-    key = (settings.vector_store, settings.qdrant_path, settings.collection)
+    key = (settings.vector_store, settings.qdrant_url or settings.qdrant_path, settings.collection)
     store = _VECTOR_STORE_CACHE.get(key)
     if store is None:
         store = _build("vector store", _VECTOR_STORES, settings.vector_store, settings)
