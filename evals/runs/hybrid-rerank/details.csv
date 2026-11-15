@@ -1,0 +1,233 @@
+id,faithfulness,answer_relevancy,llm_context_precision_with_reference,context_recall,abstained,category,source_hit,user_input,response
+e001,1.0,0.0,0.99999999998,0.0,,easy,1.0,What does create_agent return?,"The provided excerpts do not explicitly state what `create_agent` returns. They only show that calling `create_agent(...)` returns an object that can be used with `.invoke(...)` ([1], [2], [3], [4], [5]). What seems to be missing is a direct description of the return type or class of `create_agent`."
+e002,1.0,0.9043183649742383,0.0,0.4,,easy,1.0,Which parameters does create_agent accept?,"Based on the provided documentation excerpts, `create_agent` accepts the following parameters:
+
+- `model` — e.g., `""claude-sonnet-4-6""` [1][2][4][5]
+- `tools` — a list of `BaseTool` instances, callable objects, or dicts representing built-in provider tools [1][2][3][4][5]
+- `system_prompt` — e.g., `""You are a helpful research assistant.""` [2][5]
+- `middleware` — e.g., a list containing `PIIMiddleware` instances [2][3]
+- `context_schema` — a dataclass defining the structure of `context` stored in the agent `Runtime` [4]
+
+Examples from the docs:
+
+```python
+agent = create_agent(
+    model=""claude-sonnet-4-6"",
+    tools=[search_web, analyze_data, send_email],
+    system_prompt=""You are a helpful research assistant.""
+)
+```
+
+```python
+agent = create_agent(
+    model=""gpt-5-nano"",
+    tools=[...],
+    context_schema=Context
+)
+```
+
+```python
+agent = create_agent(
+    model=""gpt-5.5"",
+    tools=[],
+    middleware=[
+        PIIMiddleware(""api_key"", detector=r""sk-[a-zA-Z0-9]{32}"", strategy=""block""),
+    ],
+)
+```"
+e003,0.7333333333333333,0.7084841933048128,0.99999999998,1.0,,easy,0.0,How do you attach a checkpointer to an agent created with create_agent?,"Pass the `checkpointer` keyword argument to `create_agent` (e.g., `checkpointer=InMemorySaver()`).[1][2][4] You must also pass a `thread_id` in the invoke config for persistence to take effect.[2][5]
+
+Example:
+
+```python
+agent = create_agent(
+    model,
+    tools=[get_user_info],
+    checkpointer=InMemorySaver(),
+)
+```
+
+[1] `checkpointer=InMemorySaver()` is shown as a parameter to `create_agent` with a note that it maintains state across conversation turns.  
+[2] Shows short-term memory usage with `checkpointer=InMemorySaver()` and passing `thread_config` containing `thread_id`.  
+[4] Shows `checkpointer=InMemorySaver()` in `create_agent` for a SQL assistant.  
+[5] States to pass a checkpointer explicitly locally, e.g., `create_agent(..., checkpointer=InMemorySaver())`."
+e004,1.0,0.8814839953849924,0.99999999998,1.0,,easy,1.0,What is the purpose of the ToolRuntime argument in a tool function?,"The `ToolRuntime` argument gives a tool access to runtime information such as short-term memory/state, context, long-term memory (store), and the custom stream [5][2][1]. It is automatically injected into the tool at runtime and is hidden from the LLM—it does not appear in the tool's schema [3]. Through it, a tool can read state via `runtime.state`, access context via `runtime.context`, and read/write the store via `runtime.store` [5][2]."
+e005,1.0,0.5639183952868881,0.6999999999766667,1.0,,easy,1.0,How do you read a value from agent state inside a tool?,"Use the hidden `runtime` parameter (typed as `ToolRuntime`) and read from `runtime.state` [1][4][5]. The runtime is not exposed to the model, but the tool can access state through it:
+
+```python
+@tool
+def get_user_info(runtime: ToolRuntime) -> str:
+    user_id = runtime.state[""user_id""]
+    return ""User is John Smith"" if user_id == ""user_123"" else ""Unknown user""
+```
+
+You can also use `.get()` for optional state values [5]:
+
+```python
+current_state = runtime.state
+is_authenticated = current_state.get(""authenticated"", False)
+```
+
+Examples also show reading nested state keys like `runtime.state[""messages""]` or `runtime.state[""example_state_key""]` [4]."
+e006,1.0,0.7001885634721637,0.99999999998,1.0,,easy,1.0,What stream_mode value streams LLM tokens as messages?,"The `stream_mode` value is `""messages""` (i.e., `stream_mode=""messages""`). [1] [2] [3] [4] [5]"
+e007,1.0,0.7055598697463715,0.7555555555303703,1.0,,easy,1.0,How are long-term memories organized in the LangGraph store?,"Long-term memories are stored as JSON documents in the store. Each memory is organized under a custom `namespace` (similar to a folder) and a distinct `key` (like a file name). Namespaces often include user or org IDs or other labels to aid organization, enabling hierarchical organization of memories. Cross-namespace searching is supported through content filters. [1] [5]"
+e010,1.0,0.9998522081956448,0.999999999975,1.0,,easy,1.0,How do you install LangChain?,"To install LangChain, run one of the following commands (requires Python 3.10+):
+
+- `pip install -U langchain`  
+- `uv add langchain` [1]
+
+The package installs the core LangChain library; provider integrations (e.g., OpenAI, Anthropic) live in separate `langchain-<provider>` packages [1]."
+e011,0.3333333333333333,0.8482392294853804,0.7499999999625,1.0,,easy,1.0,How do you install LangGraph?,"To install the base LangGraph package, use one of the following:
+
+```bash
+pip install -U langgraph
+```
+
+or
+
+```bash
+uv add langgraph
+```
+
+[1] The same installation commands are also shown in [4].
+
+Note: LangGraph typically requires LangChain for accessing LLMs and defining tools; [1] also shows `pip install -U langchain` / `uv add langchain` (Python 3.10+). For provider-specific LLM packages, refer to the integrations page mentioned in [1]."
+e012,1.0,0.956875105799774,0.99999999998,1.0,,easy,1.0,What is a checkpointer used for in LangGraph?,"A checkpointer in LangGraph saves graph state as checkpoints at each super-step, organized into threads [4]. It is used to enable:
+
+- **Persistence**: saving and resuming agent state across interactions [2][4]
+- **Human-in-the-loop workflows**: inspecting, interrupting, and approving graph steps [1][4]
+- **Conversational memory**: retaining memory between interactions so follow-up messages to a thread remember previous ones [1][4][5]
+- **Time travel**: replaying prior graph executions to review or debug specific steps, and forking state at arbitrary checkpoints [1][4][5]
+- **Fault tolerance**: restarting execution from the last successful step if nodes fail [1][4][5]
+- **Pending writes**: when a node fails mid-execution, checkpoint writes from other successful nodes at that super-step are preserved so they don't need to be re-run on resume [1]
+
+Per the persistence documentation, checkpointers handle short-term, thread-scoped memory, while Stores handle long-term, cross-thread data [5]."
+e013,1.0,0.9761660927836916,0.99999999998,1.0,,easy,1.0,What is an interrupt in LangGraph?,"An interrupt in LangGraph is a dynamic pause point in graph execution that lets execution yield control back to the client and wait for external input before continuing, enabling human-in-the-loop patterns [1][2]. It is triggered by calling the `interrupt()` function inside a node; the function accepts a JSON-serializable payload that is surfaced to the caller [1][4]. LangGraph then suspends execution and saves the current graph state using its checkpointer so the run can be resumed later [1][4]. Resumption happens by re-invoking the graph with a `Command`/resume input, which becomes the return value of the `interrupt()` call [1]. Interrupts can be placed anywhere in code and made conditional based on application logic [1]. When execution resumes, the runtime restarts the entire node from the beginning rather than resuming at the exact line where `interrupt()` was called [5]."
+e014,1.0,0.8829392408232749,0.94999999997625,0.0,,easy,1.0,What does the InMemorySaver checkpointer do?,"The InMemorySaver checkpointer enables persistence during testing by allowing you to simulate multiple turns to test state-dependent behavior [1]. It maintains state across conversation turns, so without it state would be lost between user messages [5]. This lets a bot remember the previous conversation and continue from where it left off [4]. It saves state to threads [3] and conforms to the BaseCheckpointSaver interface, with async variants available for asynchronous graph execution [2]."
+e015,1.0,0.867944088658303,0.8666666666377778,1.0,,easy,1.0,What is a subagent in the multi-agent framework?,"A subagent is a specialized agent invoked by a central main agent (supervisor) as a tool; the main agent decides which subagent to call, what input to provide, and how to combine results [1][5]. It is defined by a name, description, system prompt, and tools, and may also include a custom model or middleware [2]. Subagents are stateless—they do not remember past interactions—and all conversation memory is maintained by the main agent, giving context isolation and preventing context bloat [5][3]. This allows the main agent to orchestrate multi-turn, complex workflows by calling subagents as needed [3]."
+e021,1.0,0.9196886196744947,0.999999999975,1.0,,easy,1.0,How do you enable human-in-the-loop in an agent?,"To enable human-in-the-loop, add the `HumanInTheLoopMiddleware` to the agent's `middleware` list when creating the agent, configure the `interrupt_on` mapping for which tool calls should pause, and supply a `checkpointer` so execution can be paused and resumed [2][4].
+
+Example:
+
+```python
+from langchain.agents import create_agent
+from langchain.agents.middleware import HumanInTheLoopMiddleware
+from langgraph.checkpoint.memory import InMemorySaver
+
+agent = create_agent(
+    model,
+    tools,
+    middleware=[
+        HumanInTheLoopMiddleware(
+            interrupt_on={""sql_db_query"": True},
+            description_prefix=""Tool execution pending approval"",
+        ),
+    ],
+    checkpointer=InMemorySaver(),
+)
+```
+
+[4]
+
+For Deep Agents specifically, enable it with the `interrupt_on` parameter in `create_deep_agent` (e.g., `interrupt_on={""edit_file"": True}`) [5]."
+e024,1.0,0.9808104352996757,0.99999999998,1.0,,easy,1.0,What is time travel in LangGraph?,"Time travel in LangGraph lets you inspect any checkpoint—a complete snapshot of the agent's state at each state change—and resume execution from that point to explore alternative paths. It serves as a debugger, an undo button, and an audit log [1]. Built on checkpoints, it supports two core operations: Replay (retrying from a prior checkpoint) and Fork (branching from a prior checkpoint with modified state) [5]. Resuming rolls back to the selected checkpoint's state, re-executes the graph from that point forward (without re-running nodes before it), and streams new results, effectively creating a branch in the conversation timeline [2][5]."
+e027,1.0,0.9394889768809508,0.7555555555303703,0.2,,easy,0.0,What is the Graph API in LangGraph?,"The Graph API in LangGraph is a declarative, higher-level abstraction for building Pregel applications where you define nodes, edges, and shared state to create an explicit, visualizable graph structure [3][5]. It is implemented via `StateGraph`: you declare a state type, add nodes and edges, then compile the builder into a Pregel instance [5].
+
+Key characteristics from the docs:
+- Requires declaring a **State** and may require **reducers** to manage state updates [1].
+- Generates a new checkpoint after every superstep [1].
+- Supports visualizing the workflow as a graph, useful for debugging and sharing [1].
+- Well suited to complex decision trees and branching logic, since branches are made explicit [3].
+- Shares the same underlying runtime as the Functional API, and the two can be used together in the same application [1][4].
+
+The guide covers state, sequences, branches, loops, the Send API (map-reduce), and the Command API [2]."
+e030,0.72,0.7539309019735626,0.8041666666465626,1.0,,easy,1.0,What is the Runtime object in a LangChain agent?,"The `Runtime` object is LangGraph’s runtime object that underlies LangChain’s `create_agent` [1]. It holds per-run/static invocation information across five categories:
+
+- **Context**: static info such as user ID, DB connections, or other dependencies [1]
+- **Store**: a `BaseStore` instance for long-term memory [1]
+- **Stream writer**: used for streaming via the `""custom""` stream mode [1]
+- **Execution info**: identity and retry info, including thread ID, run ID, and attempt number [1]
+- **Server info**: server-specific metadata on LangGraph Server (assistant ID, graph ID, authenticated user) [1]
+
+Its shape is defined by `context_schema` (a dataclass or `TypedDict`) [2][3], and values are passed with the `context` argument to `invoke`/`ainvoke` [2][3]. It enables dependency injection for tools and middleware [1], and is accessed as `Runtime` in nodes/node-style middleware hooks, as `ToolRuntime[Context]` inside tools [3][4], and inside `ModelRequest` for wrap-style middleware hooks [5]. Runtime context is not automatically added to the model prompt; the model only sees it if a tool, middleware, or other logic reads it and adds it to messages or the system prompt [3]."
+h002,0.5,0.0,0.6388888888675925,1.0,,hard,0.0,What is the difference between passing checkpointer=True and checkpointer=InMemorySaver() to create_agent?,"The excerpts do not contain the answer. None of the provided documentation mentions passing `checkpointer=True` to `create_agent`; they only show passing a checkpointer instance such as `InMemorySaver()` or `MemorySaver()`. Therefore, I cannot describe the difference from the given excerpts."
+m006,1.0,0.687915113725663,0.99999999998,1.0,,multi-hop,1.0,"How do you resume a paused (interrupted) graph after a human approves, and where is the paused state stored?","Resume by calling `stream_events(..., version=""v3"")` again with a `Command` that carries the resume value, e.g. `Command(resume={""decisions"": [{""type"": ""approve""}]})` [1]. Equivalently, invoke the graph again with `Command(resume=...)`; the value passed to `resume` becomes the return value of the `interrupt()` call inside the paused node [2][5].
+
+The paused state is saved using the checkpointer—LangGraph persists the graph state so execution can resume later [3][4]. This requires compiling the graph with a checkpointer and passing a config with a `thread_id` [1][3][4][5]."
+m016,0.75,0.5729861510237205,0.999999999975,1.0,,multi-hop,1.0,How do you wire an MCP tool server into an agent and expose its tools to the model?,"Install the MCP adapter package:
+
+```bash
+pip install langchain-mcp-adapters
+```
+
+Then create an `MultiServerMCPClient` pointing at the MCP server, call `await client.get_tools()` to retrieve the exposed tools, and pass those tools directly to the agent constructor:
+
+```python
+import asyncio
+from langchain_mcp_adapters.client import MultiServerMCPClient
+from deepagents import create_deep_agent
+
+async def main():
+    async with MultiServerMCPClient({
+        ""my_server"": {
+            ""transport"": ""http"",
+            ""url"": ""http://localhost:8000/mcp"",
+        }
+    }) as client:
+        tools = await client.get_tools()
+
+    agent = create_deep_agent(
+        model=""google_genai:gemini-3.5-flash"",
+        tools=tools,
+    )
+    ...
+```
+
+For a generic LangChain agent, the same pattern applies: `tools = await client.get_tools()` then `agent = create_agent(""claude-sonnet-4-6"", tools)` [2]. The client loads tools from any MCP server—databases, APIs, file systems, etc.—and LangChain converts them into LangChain tools usable by the model [3][4]. Errors from MCP tools are returned as failed tool messages by default unless `handle_tool_errors=False` is set [2].
+
+[1] shows installation and wiring into `create_deep_agent`.  
+[2] shows `client.get_tools()` and passing tools to `create_agent`, plus error handling behavior.  
+[3] explains that MCP tools are converted into LangChain tools.  
+[4] repeats the Deep Agents MCP wiring with `async with` client context."
+m017,0.7241379310344828,0.0,0.4166666666458333,0.0,,multi-hop,0.0,How do you build a multi-agent supervisor workflow and stream its intermediate steps to a UI?,"You stream intermediate steps to a UI using LangChain’s `useStream` frontend hook (React, Vue, Svelte, or Angular), which connects your UI to the agent backend and exposes real-time projections such as `stream.messages`, `stream.subagents`, `stream.values` (e.g., todos, plans, custom state), tool-call state, and interrupts [1][5]. For example, you initialize it with an API URL and assistant ID, and can submit runs with a high `recursionLimit` for long-running deep agent executions [1].
+
+For the multi-agent supervisor side, the docs describe the **subagents/supervisor pattern**: a main agent coordinates subagents as tools, and all routing passes through the main agent, which decides when and how to invoke each subagent [3]. Guidance from the personal-assistant example recommends starting with clear domain boundaries, giving each sub-agent focused tools and prompts, writing clear tool descriptions for the supervisor, testing each layer independently, and using centralized workflow control when sub-agents don’t need to converse directly with users [4].
+
+However, the provided excerpts do not contain concrete step-by-step instructions or code for actually building the supervisor workflow itself—only the pattern description and high-level takeaways. The implementation steps appear to be missing."
+m018,0.8461538461538461,0.7252210941485249,0.8874999999778125,1.0,,multi-hop,1.0,"How do you produce structured output from an agent and validate it, then stream partial structured results to the frontend?","Use `response_format=` with a schema (e.g., a Pydantic model) when creating the agent via `create_agent` or `create_deep_agent`; the model output is captured, validated against the schema, and returned under the `""structured_response""` key of the agent state [1][2][5]. Per the context-engineering docs, this coercion happens on the final response after the model/tool loop completes, not incrementally [4].
+
+To stream results to the frontend, set up `useStream` with the agent’s assistant ID and read the spec from `aiMessage.tool_calls?.[0]?.args` (shown for React, Vue, and Svelte) [3].
+
+What seems missing: the excerpts do not explicitly show streaming *partial* structured output produced by `response_format`; [3] streams a generative UI JSON-render spec from tool calls, and [4] indicates structured validation applies to the final response rather than partial intermediates."
+u001,,,,,1.0,unanswerable,,What is the monthly price of LangSmith's Plus plan?,"The documentation excerpts provided do not contain information about LangSmith's Plus plan pricing or any monthly price. They only cover prerequisites such as creating a LangSmith account and API key, tracing settings, and hosting options."
+u002,,,,,1.0,unanswerable,,How do I use create_agent in the JavaScript/TypeScript SDK?,"The documentation excerpts do not show how to use `create_agent` in the JavaScript/TypeScript SDK.
+
+The excerpts contain `create_agent` only in Python contexts:
+- [1] `from langchain.agents import create_agent`
+- [2] `subagent = create_agent(model=""..."", tools=[...])`
+
+While [4] mentions `createAgent` in passing (""connect with `useStream` the same way as with `createAgent`""), it does not provide an import statement, instantiation example, or any JavaScript/TypeScript-specific usage for `create_agent`. The JavaScript/TypeScript examples shown instead use `create_deep_agent` [3] and `useStream` [4][5].
+
+What seems to be missing: a JavaScript/TypeScript import path and code example for `create_agent`."
+u003,,,,,1.0,unanswerable,,"Which is better for RAG, LangChain or LlamaIndex?","The provided documentation excerpts do not contain an answer to this question. Excerpt [1] lists both LangChain and LlamaIndex as examples of agent frameworks, but it does not compare them for RAG or state which is better. The other excerpts describe RAG and retrieval using LangChain/LangGraph without mentioning LlamaIndex or offering a comparison. A direct comparison or recommendation between LangChain and LlamaIndex for RAG is missing from the excerpts."
+u004,,,,,1.0,unanswerable,,What HNSW ef_construction value does Qdrant use by default?,"The provided documentation excerpts do not contain any information about Qdrant's default HNSW `ef_construction` value. The excerpts appear to be frontend-related pages (branching chat, headless tools, join & rejoin streams, human-in-the-loop, generative UI) and contain no Qdrant or HNSW configuration details.
+
+What seems to be missing: Any excerpt discussing Qdrant vector store configuration or HNSW index parameters."
+u005,,,,,1.0,unanswerable,,What is Anthropic's rate limit for the claude-sonnet-4-6 API?,"The provided documentation excerpts do not contain Anthropic's rate limit for the claude-sonnet-4-6 API.
+
+The excerpts mention rate limits only in a general context: `max_retries` controls how many times failed requests are retried, and rate limits (HTTP 429) are among the errors retried automatically [2]. No specific rate limit values (e.g., requests per minute or tokens per minute) for `claude-sonnet-4-6` are given."
+u006,,,,,1.0,unanswerable,,When will LangGraph v2 be released?,"The documentation excerpts do not contain the answer. They state that LangGraph 1.0 will remain in ACTIVE status until version 2.0 is released [5], but no release date or timeframe for LangGraph v2 is provided."
+u007,,,,,1.0,unanswerable,,What is the maximum number of subagents a deep agent can spawn?,"The provided documentation excerpts do not specify a maximum number of subagents a deep agent can spawn. [2], [3], and [4] mention that deep agents can spawn subagents and delegate tasks, but none state a limit on how many."
+u008,,,,,1.0,unanswerable,,How do I fine-tune an LLM using LangChain?,"The provided documentation excerpts do not contain information about fine-tuning LLMs using LangChain. None of the excerpts mention fine-tuning; they cover workflows/agents, LangSmith tracing setup, LangChain philosophy, voice agents, and semantic search engines. Information about LLM fine-tuning is missing."
+u009,,,,,1.0,unanswerable,,What GPU is required to run LangGraph?,"The provided documentation excerpts do not contain information about what GPU is required to run LangGraph. Excerpt [1] mentions NVIDIA-optimized execution strategies via the `langchain-nvidia-langgraph` package, but it does not state whether a GPU is required or specify any GPU model. The remaining excerpts cover installation, deep agents, and LangSmith Studio without mentioning GPU requirements."
+u010,,,,,1.0,unanswerable,,Who is the CEO of LangChain the company?,"The provided documentation excerpts do not mention who the CEO of LangChain the company is.
+
+[1] notes that LangChain Inc. was formed as a company in February 2023, but no CEO is named. [4] references LangChain Inc. and related products (Deep Agents, LangGraph) but does not identify its leadership. What seems to be missing is any mention of the company's executive team or CEO."
+u011,,,,,1.0,unanswerable,,What is the default embedding model used by the create_agent function?,"The provided documentation excerpts do not mention a default embedding model for the `create_agent` function. The excerpts discuss the `model` parameter (e.g., ""claude-sonnet-4-6"", ""gpt-5.5"") and middleware configuration, but none of them reference embeddings or an embedding model."
+u012,,,,,1.0,unanswerable,,How do I configure Redis as a checkpointer with connection pooling and TLS?,"The provided documentation excerpts do not cover configuring Redis as a checkpointer with connection pooling and TLS.
+
+The excerpts only show creating a Redis checkpointer using a simple connection string, such as `RedisSaver.from_conn_string(""redis://localhost:6379"")` [1][2][5] or `AsyncRedisSaver.from_conn_string(""redis://localhost:6379"")` [4][5]. No parameters, options, or URI formats for enabling TLS or connection pooling are documented in the given text."
+u013,,,,,1.0,unanswerable,,What is the token cost per LangGraph node execution?,"The provided documentation excerpts do not contain any information about token cost per LangGraph node execution. They cover durability modes [1], graph API concepts [2], LLM token streaming [3], NVIDIA execution optimizations [4], and node caching [5], but none mention token pricing or costs."
+u014,,,,,1.0,unanswerable,,How do I roll back a deployed LangGraph app to a previous version using the CLI?,"The provided documentation excerpts do not contain instructions for rolling back a deployed LangGraph app to a previous version using the CLI.
+
+Excerpt [1] discusses version compatibility warnings for downgrading LangGraph (specifically around `DeltaChannel` checkpoints), and excerpt [3] shows upgrade commands, but neither provides CLI commands or a procedure for rolling back a deployed app to an earlier version. Information about the specific CLI rollback command or deployment downgrade steps appears to be missing."

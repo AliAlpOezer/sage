@@ -9,6 +9,7 @@ task genuinely spans two rows.
 | build a feature, change behaviour, "where does X live", "how does X flow" (ports, adapters, ingest/query pipeline, API) | `architecture.md` | 900 |
 | "why is it like this", proposing a rewrite, replacing a library, backend, or model | `decisions.md` | 700 |
 | something is broken, flaky, slow, or behaves unexpectedly (ingest, Qdrant lock, uvicorn, evals) | `gotchas.md` | 600 |
+| knowledge graph, Neo4j, GraphRAG, graph retrieval strategies, their decision nodes | `graph.md` | 2800 |
 | anything else, or unclear | `STATUS.md` | 400 |
 
 Bug reports usually want `gotchas.md` first — check it before reading code. If the

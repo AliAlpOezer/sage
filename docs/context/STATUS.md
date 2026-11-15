@@ -124,7 +124,7 @@ learning trail.
 
 ## Next up
 
-1. Kept 2026-11-15. Score `hybrid-rerank` (the served stack) on the same generator and judge.
+1. `hybrid-rerank` (the served stack) scored 2026-11-15, answerable n=22: faithfulness 0.891, relevancy 0.708, precision 0.842, recall 0.800, source page 0.818. Mixed vs `rerank-cohere` (0.961 / 0.723 / 0.896 / 0.759 / 0.773): best recall and source-page hit, but lower precision and faithfulness. This trips the revisit-if in `decisions.md`; keep/drop BM25 in the served stack is Alp's call. Graph design explainer for Alp: https://claude.ai/artifact/XJr9DH9Ktz8xjNZWj3yTBo (private; built from `graph.md`).
 2. Score the contextual arms against the same generator and judge.
 3. Alp labels ~20 more multi-hop questions: with 4 of 36, a GraphRAG win cannot show up
    in the scorecard. (Labeling is never delegated, see `decisions.md`.)
@@ -132,7 +132,7 @@ learning trail.
    the in-memory `rank_bm25` index rebuilds per process.
 5. Neo4j graph from doc structure first (page links, heading tree, class mentions,
    zero LLM cost), LLM entity extraction as the paid comparison arm; each graph strategy
-   stands alone (fusion with RRF optional, per the 2026-11-15 framing). Design in progress.
+   stands alone (fusion with RRF optional). Design record: `graph.md` (decision nodes G1-G15).
 6. Machine limit: 3.6 GB RAM, Docker not running. Local Neo4j + Qdrant server will not
    fit; the free managed tiers (AuraDB Free, Qdrant Cloud free) are the realistic
    "free" option, and both pause when idle.
