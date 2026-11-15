@@ -63,6 +63,10 @@ VARIANTS: dict[str, tuple[dict, str]] = {
         {"sparse_retriever": "bm25", "retrieve_k": 30},
         "Day-36: dense + BM25 -> RRF fusion (targets context_recall)",
     ),
+    "hybrid-rerank": (
+        {"sparse_retriever": "bm25", "reranker": "cohere", "retrieve_k": 30},
+        "what the app serves: dense + BM25 -> RRF -> Cohere Rerank -> keep top_k",
+    ),
     "structural": (
         {"chunker": "structural", "collection": "langchain-docs-structural"},
         "Day-38 free control: heading-breadcrumb prefix, no LLM (needs ingest)",
@@ -79,8 +83,15 @@ VARIANTS: dict[str, tuple[dict, str]] = {
 
 # The golden set was labeled against the LangChain docs alone, so every variant is
 # pinned to that corpus in the local store whatever `.env` serves; chunk-* variants
-# override the collection.
-EVAL_CORPUS = {"sources": ("langchain",), "collection": "langchain-docs", "qdrant_url": ""}
+# override the collection. Retrieval stages are pinned off too, so the app serving
+# hybrid + rerank never leaks into the baseline arm; variants switch them on.
+EVAL_CORPUS = {
+    "sources": ("langchain",),
+    "collection": "langchain-docs",
+    "qdrant_url": "",
+    "sparse_retriever": "none",
+    "reranker": "none",
+}
 
 
 def variant_settings(name: str) -> Settings:

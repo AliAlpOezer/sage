@@ -3,6 +3,19 @@
 One entry per settled decision, newest first — stops an agent from cheerfully
 re-proposing something already rejected.
 
+### The app serves hybrid (BM25 + dense, RRF) plus Cohere rerank
+Date: 2026-11-15 · Status: settled (Alp) · revisit-if `hybrid-rerank` scores below
+`rerank-cohere` on the same generator and judge
+Same generator and judge, answerable n=22: context precision baseline 0.656, hybrid
+0.797, rerank-cohere 0.896; faithfulness and recall flat or slightly up. Answer relevancy
+fell ~0.05 on both (uninspected). `.env` sets `SAGE_SPARSE_RETRIEVER=bm25` and
+`SAGE_RERANKER=cohere`; the harness pins both off in `EVAL_CORPUS` so the baseline arm
+stays dense-only, and the `hybrid-rerank` variant scores the served stack. Cost
+accepted: the combination itself was unscored when chosen, every query pays one Cohere
+call, and the in-memory BM25 index is rebuilt per process from the whole collection.
+Rejected: rerank only (simpler, best single number, but hybrid is kept as a showcase
+stage and for lexical queries such as class names).
+
 ### OpenRouter keys rotate on 429 inside an httpx transport
 Date: 2026-11-09 · Status: settled · revisit-if Alp stops wanting the free keys used
 (credit was bought on key 2's account the same day; 402 now rotates too, so paid calls

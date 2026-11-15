@@ -13,6 +13,12 @@ Alp, 2026-11-10: tired of the project stalling on the baseline score since Augus
 run in the background and must not block feature work. Same day he decided the corpus
 grows to four doc sites (LangChain, Langfuse, Qdrant, Neo4j).
 
+Alp, 2026-11-15: keep hybrid and rerank (the app now serves both, see `decisions.md`);
+W6 merged to master. Next is the knowledge-graph design. Framing: a portfolio of
+retrieval strategies that need not interact or be fused; each is shown on its own with
+when it pays off. Every design fork is recorded with the chosen path and why, as a
+learning trail.
+
 ## State (verified 2026-11-09)
 
 - Golden set `evals/ragset_v1.jsonl` is done: 36 hand-labeled triples (17 easy,
@@ -118,15 +124,15 @@ grows to four doc sites (LangChain, Langfuse, Qdrant, Neo4j).
 
 ## Next up
 
-1. Keep/kill call on hybrid and rerank-cohere is Alp's (scores in State).
+1. Kept 2026-11-15. Score `hybrid-rerank` (the served stack) on the same generator and judge.
 2. Score the contextual arms against the same generator and judge.
 3. Alp labels ~20 more multi-hop questions: with 4 of 36, a GraphRAG win cannot show up
    in the scorecard. (Labeling is never delegated, see `decisions.md`.)
 4. Native hybrid in Qdrant (sparse vectors with IDF + dense HNSW in one collection);
    the in-memory `rank_bm25` index rebuilds per process.
 5. Neo4j graph from doc structure first (page links, heading tree, class mentions,
-   zero LLM cost), LLM entity extraction as the paid comparison arm; a GraphRetriever
-   port feeding RRF as a third list. Run a `system-design` pass first.
+   zero LLM cost), LLM entity extraction as the paid comparison arm; each graph strategy
+   stands alone (fusion with RRF optional, per the 2026-11-15 framing). Design in progress.
 6. Machine limit: 3.6 GB RAM, Docker not running. Local Neo4j + Qdrant server will not
    fit; the free managed tiers (AuraDB Free, Qdrant Cloud free) are the realistic
    "free" option, and both pause when idle.
