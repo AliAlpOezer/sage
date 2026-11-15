@@ -21,7 +21,7 @@ Backends are selected via `.env` (see `.env.example`) — the factory in
 
 ```sh
 uv sync
-cp .env.example .env   # add your OPENROUTER_API_KEY
+cp .env.example .env   # add your OPENROUTER_API_KEY_1 (and _2, _3, ...)
 uv run python -m pytest
 ```
 

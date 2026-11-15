@@ -6,6 +6,8 @@ it, they become the judge: uv run python -m pytest tests/test_chunker.py -v
 Test settings use small sizes (max 200 chars, overlap 40) so cases stay readable.
 """
 
+from itertools import pairwise
+
 import pytest
 
 from sage.adapters.chunkers import RecursiveChunker
@@ -78,7 +80,7 @@ def test_huge_single_paragraph_is_hard_split_with_overlap(chunker):
     assert len(chunks) >= 5
     for c in chunks:
         assert len(c.text) <= MAX
-    for prev, nxt in zip(chunks, chunks[1:]):
+    for prev, nxt in pairwise(chunks):
         assert nxt.text[:OVERLAP] == prev.text[-OVERLAP:], (
             "consecutive hard-split pieces must overlap by overlap_chars"
         )

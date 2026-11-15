@@ -12,8 +12,9 @@ from ragas.embeddings import LangchainEmbeddingsWrapper
 from ragas.llms import LangchainLLMWrapper
 from ragas.run_config import RunConfig
 
+from sage import openrouter
 from sage.config import Settings
-from sage.evals.judge import OPENROUTER_BASE_URL, default_metrics
+from sage.evals.judge import default_metrics
 
 CANDIDATES = [
     "qwen/qwen3-next-80b-a3b-instruct:free",
@@ -45,9 +46,8 @@ def main() -> None:
     emb = LangchainEmbeddingsWrapper(
         OpenAIEmbeddings(
             model=s.embedding_model,
-            api_key=s.openrouter_api_key,
-            base_url=OPENROUTER_BASE_URL,
             check_embedding_ctx_length=False,
+            **openrouter.openai_kwargs(s, timeout=60, pool="embeddings"),
         )
     )
     dataset = EvaluationDataset(samples=SAMPLES)
@@ -59,8 +59,7 @@ def main() -> None:
         llm = LangchainLLMWrapper(
             ChatOpenAI(
                 model=model,
-                api_key=s.openrouter_api_key,
-                base_url=OPENROUTER_BASE_URL,
+                **openrouter.openai_kwargs(s, timeout=90),
                 temperature=0.0,
                 timeout=90,
                 max_retries=2,

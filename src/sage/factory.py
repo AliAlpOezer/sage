@@ -8,11 +8,20 @@ adding a backend is: write the adapter, decorate it, set its name in .env.
 from collections.abc import Callable
 
 from sage.config import Settings
-from sage.ports import Chunker, Embedder, Generator, VectorStore
+from sage.ports import (
+    Chunker,
+    Embedder,
+    Generator,
+    Reranker,
+    SparseRetriever,
+    VectorStore,
+)
 
 _CHUNKERS: dict[str, Callable[[Settings], Chunker]] = {}
 _EMBEDDERS: dict[str, Callable[[Settings], Embedder]] = {}
 _VECTOR_STORES: dict[str, Callable[[Settings], VectorStore]] = {}
+_SPARSE_RETRIEVERS: dict[str, Callable[[Settings], SparseRetriever]] = {}
+_RERANKERS: dict[str, Callable[[Settings], Reranker]] = {}
 _GENERATORS: dict[str, Callable[[Settings], Generator]] = {}
 
 # Embedded qdrant holds an exclusive per-process file lock on its storage dir,
@@ -49,6 +58,22 @@ def register_vector_store(name: str):
     return decorate
 
 
+def register_sparse_retriever(name: str):
+    def decorate(builder: Callable[[Settings], SparseRetriever]):
+        _SPARSE_RETRIEVERS[name] = builder
+        return builder
+
+    return decorate
+
+
+def register_reranker(name: str):
+    def decorate(builder: Callable[[Settings], Reranker]):
+        _RERANKERS[name] = builder
+        return builder
+
+    return decorate
+
+
 def register_generator(name: str):
     def decorate(builder: Callable[[Settings], Generator]):
         _GENERATORS[name] = builder
@@ -69,7 +94,7 @@ def make_embedder(settings: Settings) -> Embedder:
 
 def make_vector_store(settings: Settings) -> VectorStore:
     _load_adapters()
-    key = (settings.vector_store, settings.qdrant_path, settings.collection)
+    key = (settings.vector_store, settings.qdrant_url or settings.qdrant_path, settings.collection)
     store = _VECTOR_STORE_CACHE.get(key)
     if store is None:
         store = _build("vector store", _VECTOR_STORES, settings.vector_store, settings)
@@ -80,6 +105,16 @@ def make_vector_store(settings: Settings) -> VectorStore:
 def reset_vector_store_cache() -> None:
     """Drop cached stores (releasing their clients). For tests / a clean rebuild."""
     _VECTOR_STORE_CACHE.clear()
+
+
+def make_sparse_retriever(settings: Settings) -> SparseRetriever:
+    _load_adapters()
+    return _build("sparse retriever", _SPARSE_RETRIEVERS, settings.sparse_retriever, settings)
+
+
+def make_reranker(settings: Settings) -> Reranker:
+    _load_adapters()
+    return _build("reranker", _RERANKERS, settings.reranker, settings)
 
 
 def make_generator(settings: Settings) -> Generator:

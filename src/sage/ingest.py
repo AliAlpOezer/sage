@@ -7,10 +7,15 @@ upserts the same points instead of duplicating them.
 """
 
 import asyncio
+from itertools import batched
 
 from sage.config import Settings
 from sage.factory import make_chunker, make_embedder, make_vector_store
 from sage.loader import load_pages
+
+# Chunks embedded and upserted per round. Bounds peak memory (a vector is ~50 KB as
+# Python floats) and means an interrupted run keeps everything before the failure.
+INGEST_BATCH = 512
 
 
 async def run(settings: Settings | None = None) -> None:
@@ -25,11 +30,13 @@ async def run(settings: Settings | None = None) -> None:
     chunks = [chunk for page in pages for chunk in chunker.chunk(page)]
     print(f"chunked into {len(chunks)} chunks")
 
-    vectors = await embedder.embed([chunk.text for chunk in chunks])
-    print(f"embedded {len(vectors)} chunks (dimension {len(vectors[0])})")
-
-    store.ensure_collection(dimension=len(vectors[0]))
-    store.upsert(chunks, vectors)
+    done = 0
+    for batch in batched(chunks, INGEST_BATCH):
+        vectors = await embedder.embed([chunk.text for chunk in batch])
+        store.ensure_collection(dimension=len(vectors[0]))
+        store.upsert(batch, vectors)
+        done += len(batch)
+        print(f"  embedded + stored {done}/{len(chunks)}")
     print(f"store now holds {store.count()} vectors")
 
 

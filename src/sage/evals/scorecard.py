@@ -19,7 +19,7 @@ Expect this to be slow over 30-50 triples — that is the rate limit, not a hang
 
 import argparse
 import json
-from datetime import date
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -27,7 +27,7 @@ from ragas import EvaluationDataset, SingleTurnSample, evaluate
 
 from sage.config import Settings
 from sage.evals.dataset import load_triples
-from sage.evals.judge import build_judge, default_metrics, default_run_config
+from sage.evals.judge import build_judges, default_metrics, default_run_config
 from sage.service import answer as baseline_answer
 
 EVALS_DIR = Path("evals")
@@ -91,28 +91,38 @@ def phase_score(settings: Settings) -> None:
             answers[rec["id"]] = rec
 
     ids = [i for i in triples if i in answers]
-    samples = [
-        SingleTurnSample(
-            user_input=triples[i].question,
-            response=answers[i]["answer"],
-            retrieved_contexts=answers[i]["retrieved_contexts"],
-            reference=triples[i].ground_truth,
-        )
-        for i in ids
-    ]
-    print(f"score: {len(samples)} samples with judge={settings.judge_model}")
+    print(f"score: {len(ids)} samples with judge={settings.resolved_judge_model}")
 
-    llm, emb = build_judge(settings)
-    result = evaluate(
-        dataset=EvaluationDataset(samples=samples),
-        metrics=default_metrics(),
-        llm=llm,
-        embeddings=emb,
-        run_config=default_run_config(settings),
-    )
-    df = result.to_pandas()
-    df.insert(0, "id", ids)
-    df["category"] = [triples[i].category for i in ids]
+    judges = build_judges(settings)
+    id_chunks = [ids[i::len(judges)] for i in range(len(judges))]  # interleaved, evens out easy/hard mix
+    run_config = default_run_config(settings)
+    dfs = []
+    for n, (chunk_ids, (llm, emb)) in enumerate(zip(id_chunks, judges), 1):
+        if not chunk_ids:
+            continue
+        samples = [
+            SingleTurnSample(
+                user_input=triples[i].question,
+                response=answers[i]["answer"],
+                retrieved_contexts=answers[i]["retrieved_contexts"],
+                reference=triples[i].ground_truth,
+            )
+            for i in chunk_ids
+        ]
+        print(f"  judge {n}/{len(judges)}: {len(samples)} samples")
+        result = evaluate(
+            dataset=EvaluationDataset(samples=samples),
+            metrics=default_metrics(),
+            llm=llm,
+            embeddings=emb,
+            run_config=run_config,
+        )
+        chunk_df = result.to_pandas()
+        chunk_df.insert(0, "id", chunk_ids)
+        chunk_df["category"] = [triples[i].category for i in chunk_ids]
+        dfs.append(chunk_df)
+
+    df = pd.concat(dfs, ignore_index=True) if len(dfs) > 1 else dfs[0]
     df.to_csv(DETAILS, index=False)
     _write_scorecard(df, settings, n_total=len(triples))
     print(f"wrote {SCORECARD} and {DETAILS}")
@@ -131,11 +141,11 @@ def _write_scorecard(df: pd.DataFrame, settings: Settings, n_total: int) -> None
 
     lines: list[str] = []
     lines.append("# Baseline Scorecard — naive RAG")
-    lines.append(f"Run: {date.today().isoformat()}  ·  triples scored: {len(df)}/{n_total}")
+    lines.append(f"Run: {datetime.now().astimezone().date().isoformat()}  ·  triples scored: {len(df)}/{n_total}")
     lines.append("")
     lines.append("## Config")
-    lines.append(f"- judge: `{settings.judge_model}`")
-    lines.append(f"- generation: `{settings.generation_model}`  ·  embedding: `{settings.embedding_model}`")
+    lines.append(f"- judge: `{settings.resolved_judge_model}`")
+    lines.append(f"- generation: `{settings.resolved_generation_model}`  ·  embedding: `{settings.embedding_model}`")
     lines.append(f"- retrieval: top_k={settings.top_k}, store={settings.vector_store}, chunker={settings.chunker}")
     lines.append("")
     lines.append("## Per-metric mean (higher = better; 0–1)")
@@ -143,10 +153,10 @@ def _write_scorecard(df: pd.DataFrame, settings: Settings, n_total: int) -> None
     lines.append("|---|---|---|---|")
     for c in present:
         m = means[c]
-        lines.append(f"| {c} | {METRIC_STAGE[c]} | {('%.3f' % m) if pd.notna(m) else 'n/a'} | {nan_counts[c]} |")
+        lines.append(f"| {c} | {METRIC_STAGE[c]} | {f'{m:.3f}' if pd.notna(m) else 'n/a'} | {nan_counts[c]} |")
     lines.append("")
     wm = means[weakest]
-    lines.append(f"**Weakest metric: `{weakest}` ({('%.3f' % wm) if pd.notna(wm) else 'n/a'}, {METRIC_STAGE[weakest]} stage).** ← W6 target")
+    lines.append(f"**Weakest metric: `{weakest}` ({f'{wm:.3f}' if pd.notna(wm) else 'n/a'}, {METRIC_STAGE[weakest]} stage).** ← W6 target")
     lines.append("")
     lines.append("## Worst 5 cases")
     for _, r in worst.iterrows():

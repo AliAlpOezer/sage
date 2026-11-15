@@ -8,15 +8,19 @@ this module is just the command-line front end.
 """
 
 import argparse
+import sys
 
 from sage.service import EmptyIndex, answer
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Ask the LangChain docs a question.")
+    parser = argparse.ArgumentParser(description="Ask the ingested docs a question.")
     parser.add_argument("question")
     parser.add_argument("-k", type=int, default=None, help="chunks to retrieve (default: SAGE_TOP_K)")
     args = parser.parse_args()
+    # Windows consoles and pipes default to cp1252, which cannot encode every
+    # character a doc title or answer may contain.
+    sys.stdout.reconfigure(encoding="utf-8")
 
     try:
         result = answer(args.question, args.k)

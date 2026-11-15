@@ -5,8 +5,11 @@ adapter modules to the imports below.
 """
 
 from sage.adapters import (  # noqa: F401
+    bm25_store,
+    chat_generator,
     chunkers,
+    contextual,
     openrouter_embedder,
-    openrouter_generator,
     qdrant_store,
+    rerank,
 )

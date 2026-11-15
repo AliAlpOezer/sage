@@ -2,6 +2,8 @@
 
 Batches the input and runs batches concurrently under a semaphore — unbounded
 gather over hundreds of requests would trip rate limits and exhaust sockets.
+A 429 rotates to the next OPENROUTER_API_KEY_<n> inside the client's transport
+(see `sage.openrouter`); the retry loop here only sees one once every key refused.
 """
 
 import asyncio
@@ -9,25 +11,26 @@ from collections.abc import Sequence
 
 import httpx
 
+from sage import openrouter
 from sage.config import Settings
 from sage.factory import register_embedder
 
-_URL = "https://openrouter.ai/api/v1/embeddings"
+_URL = f"{openrouter.OPENROUTER_BASE_URL}/embeddings"
 
 
 @register_embedder("openrouter")
 class OpenRouterEmbedder:
     def __init__(self, settings: Settings):
-        self.api_key = settings.openrouter_api_key
+        self.settings = settings
         self.model = settings.embedding_model
         self.batch_size = settings.embed_batch_size
         self.concurrency = settings.embed_concurrency
+        openrouter.key_ring(settings, "embeddings")  # fail at construction if no keys are configured
 
     async def embed(self, texts: Sequence[str]) -> list[list[float]]:
         batches = [texts[i : i + self.batch_size] for i in range(0, len(texts), self.batch_size)]
         sem = asyncio.Semaphore(self.concurrency)
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        async with httpx.AsyncClient(timeout=60, headers=headers) as client:
+        async with openrouter.async_client(self.settings, "embeddings", timeout=60) as client:
             results = await asyncio.gather(
                 *(self._embed_batch(client, sem, batch) for batch in batches)
             )
@@ -43,8 +46,8 @@ class OpenRouterEmbedder:
                 if response.status_code in (429, 500, 502, 503) and attempt < 3:
                     await asyncio.sleep(2**attempt)
                     continue
-                response.raise_for_status()
                 break
+        openrouter.raise_for_status(response)
         data = response.json()["data"]
         # The API echoes an index per item; sort by it rather than trusting order.
         return [item["embedding"] for item in sorted(data, key=lambda d: d["index"])]

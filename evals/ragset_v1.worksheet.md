@@ -26,7 +26,7 @@ _notes: core API return type_
   > The job of a harness: get the model the right context at the right time for the given task.
   > </Note>
   > A harness is everything around that loop: the model, its prompt, its tools, and any middleware that shapes its
-**A[e001]:** 
+**A[e001]:** it returns an agent object. An instance of the Agent class, that is having .invoke() method
 
 ## e002 · easy
 **Q:** Which parameters does create_agent accept?
@@ -43,7 +43,7 @@ _notes: exact-identifier / params — predicted weak spot_
   > The job of a harness: get the model the right context at the right time for the given task.
   > </Note>
   > A harness is everything around that loop: the model, its prompt, its tools, and any middleware that shapes its
-**A[e002]:** 
+**A[e002]:** model, tools, system_prompt, memory, middleware, checkpointer, store, interrupt_before, interrupt_after, debug
 
 ## e003 · easy
 **Q:** How do you attach a checkpointer to an agent created with create_agent?
@@ -70,7 +70,7 @@ _notes: checkpointer=InMemorySaver() usage_
   > <img src="https://mintcdn.com/langchain-5e9cc07a/-_xGPoyjhyiDWTPJ/oss/images/checkpoints.jpg?fit=max&auto=format&n=-_xGPoyjhyiDWTPJ&q=85&s=966566aaae853ed4d240c2d0d067467c" alt="Checkpoints" width="2316" height="748" data-path="oss/images/checkpoints.jpg" />
   > <Info>
   >   **Agent Server handles checkpointing automa
-**A[e003]:** 
+**A[e003]:** with passing a checkpointer argument when calling create_agent, BUT if the thread_id is not assigned in the config data, the agent won't have a persistent memory.
 
 ## e004 · easy
 **Q:** What is the purpose of the ToolRuntime argument in a tool function?
@@ -84,7 +84,7 @@ _notes: ToolRuntime access to state/store_
   > Under the hood, tools are callable functions with well-defined inputs and outputs that get passed to a [chat model](/oss/python/langchain/models). The model decides when to invoke a tool based on the conversation context, and what input arguments to provide.
   > <Tip>
   >   For details on how models handle tool calls, see [Tool calling](/oss/python/langchain/models#tool-calling). Trace tool calls and debug errors with [LangSmith](https://smith.langchain.com?utm_source=docs\&utm_medium=cta\&utm_campaign=langsmith-signup\&utm_content=oss-langc
-**A[e004]:** 
+**A[e004]:** The ToolRuntime parameter in a tool function gives the tool direct access to the agent's internal context, memory, and execution utilities without exposing those implementation deatils to the llm. runtime.state accesses the agents current graph state, and runtime.store interacts with the persistent long-term memory store (BaseStore), allowing tools to load or save long-term memories.
 
 ## e005 · easy
 **Q:** How do you read a value from agent state inside a tool?
@@ -98,7 +98,7 @@ _notes: runtime.state.get(...)_
   > Under the hood, tools are callable functions with well-defined inputs and outputs that get passed to a [chat model](/oss/python/langchain/models). The model decides when to invoke a tool based on the conversation context, and what input arguments to provide.
   > <Tip>
   >   For details on how models handle tool calls, see [Tool calling](/oss/python/langchain/models#tool-calling). Trace tool calls and debug errors with [LangSmith](https://smith.langchain.com?utm_source=docs\&utm_medium=cta\&utm_campaign=langsmith-signup\&utm_content=oss-langc
-**A[e005]:** 
+**A[e005]:** By using the runtime parameter, the tool can access the state dictionary through runtime.state and read any keys stored there. e.g. in some form like runtime.state["key"]
 
 ## e006 · easy
 **Q:** What stream_mode value streams LLM tokens as messages?
@@ -114,7 +114,7 @@ _notes: stream_mode="messages" — exact value_
   > </Tip>
   > LangChain implements a streaming system to surface real-time updates.
   > Streaming is crucial for enhancing the responsiveness of applications built on LLMs. By displaying output progressively, even before a complete response is ready, streaming significantly improves user experience (UX), particularly when dealing
-**A[e006]:** 
+**A[e006]:** The stream_mode value that streams LLM tokens as messages is `"messages"` — setting `stream_mode="messages"` streams LLM tokens with metadata
 
 ## e007 · easy
 **Q:** How are long-term memories organized in the LangGraph store?
@@ -135,7 +135,7 @@ _notes: namespace + key model_
   > > LangGraph stores provide cross-thread long-term memory, complementing per-thread checkpointer persistence.
   > Stores let agents persist information across threads, including user preferences, accumulated knowledge, and facts that should survive beyond a single conversation. Unlike [checkpointers](/oss/python/langgraph/checkpointers), which save the full graph state scoped to one thread, stores hold arbitrary key-value data accessible from any thread.
   > <img src="https://mintcdn.com/langchain-5e9cc07a/dL5Sn6Cmy9pwtY0V/oss/images/shared_state.png?fit=max&auto=format&n=dL5Sn6Cmy9pwtY0V&q=85&s=354526fb48c5eb11b4b2684a2df40d6c" alt="Model of shared state" width="1482" height="777" data-path="oss/images/shar
-**A[e007]:** 
+**A[e007]:** In LangGraph Store (BaseStore), long-term memories are organized as JSON documents structured around a hierarchical Namespace and Key model.
 
 ## e008 · easy
 **Q:** What function creates a deep agent?
@@ -211,7 +211,7 @@ _notes: install command_
   >   pip install -U langchain-openai
   > # Installing the Anthropic integration
   >   pip install -U
-**A[e010]:** 
+**A[e010]:** pip install -U langchain
 
 ## e011 · easy
 **Q:** How do you install LangGraph?
@@ -240,7 +240,7 @@ _notes: install command_
   >   # Requires Python 3.10+
   >   ```
   >   ```b
-**A[e011]:** 
+**A[e011]:** pip install -U langgraph
 
 ## e012 · easy
 **Q:** What is a checkpointer used for in LangGraph?
@@ -270,7 +270,7 @@ _notes: persistence concept_
   > Persistence lets LangGraph applications keep useful information beyond a single graph run. It matters when an agent needs to continue a conversation, resume after an interruption, recover from a failure, or remember information across interactions.
   > LangGraph provides two complementary persistence systems:
   > * **[Checkpointers](/oss/python/langgraph/checkpointers)** persist a thread's graph state as checkpoints. Use the
-**A[e012]:** 
+**A[e012]:** A checkpointer in LangGraph saves a snapshot of the graph’s state at each super‑step, organized into threads. By storing these checkpoints it enables persistence, human‑in‑the‑loop workflows, time‑travel debugging, fault‑tolerant execution, and conversational memory
 
 ## e013 · easy
 **Q:** What is an interrupt in LangGraph?
@@ -282,7 +282,7 @@ _notes: concept_
   > # Interrupts
   > Interrupts allow you to pause graph execution at specific points and wait for external input before continuing. This enables human-in-the-loop patterns where you need external input to proceed. When an interrupt is triggered, LangGraph saves the graph state using its [persistence](/oss/python/langgraph/persistence) layer and waits indefinitely until you resume execution.
   > Interrupts work by calling the `interrupt()` function at any point in your graph nodes. The function accepts any JSON-serializable value which is surfaced to the caller. When you're ready to continue, you resume execution by re-invoking the graph using `Command`, which then becomes the return value of the `interrupt()` call from
-**A[e013]:** 
+**A[e013]:** In LangGraph, an interrupt is a mechanism that pauses the execution of a graph at a specific point and yields control back to the caller (such as a user interface or human-in-the-loop workflow).
 
 ## e014 · easy
 **Q:** What does the InMemorySaver checkpointer do?
@@ -297,7 +297,7 @@ _notes: exact-identifier_
   > <img src="https://mintcdn.com/langchain-5e9cc07a/-_xGPoyjhyiDWTPJ/oss/images/checkpoints.jpg?fit=max&auto=format&n=-_xGPoyjhyiDWTPJ&q=85&s=966566aaae853ed4d240c2d0d067467c" alt="Checkpoints" width="2316" height="748" data-path="oss/images/checkpoints.jpg" />
   > <Info>
   >   **Agent Server handles checkpointing automa
-**A[e014]:** 
+**A[e014]:** In LangGraph, the InMemorySaver is a lightweight, non-persistent checkpointer that stores thread state snapshots directly in your application's RAM (in-memory data structures like Python dictionaries).
 
 ## e015 · easy
 **Q:** What is a subagent in the multi-agent framework?
@@ -310,7 +310,7 @@ _notes: concept_
   > In the **subagents** architecture, a central main [agent](/oss/python/langchain/agents) (often referred to as a **supervisor**) coordinates subagents by calling them as [tools](/oss/python/langchain/tools). The main agent decides which subagent to invoke, what input to provide, and how to combine results. Subagents are stateless—they don't remember past interactions, with all conversation memory maintained by the main agent. This provides [context](/oss/python/langchain/context-engineering) isolation: each subagent invocation works in a clean context window, preventing context bloat in the main conversation.
   > For built-in subagent support, see [Deep Agents](/oss/python/deepagents/subagents).
   > ```me
-**A[e015]:** 
+**A[e015]:** A subagent is a stateless component that the main (supervisor) agent invokes as a tool to perform specialized work in an isolated context, returning only the final result so the main agent’s conversation stays clean and avoids context bloat
 
 ## e016 · easy
 **Q:** What is a handoff between agents?
@@ -421,7 +421,7 @@ _notes: HITL_
   > When a model proposes an action that might require review—for example, writing to a file or executing SQL—the middleware can pause execution and wait for a decision.
   > It does this by checking each tool call against a configurable policy. If intervention is needed, the middleware issues an [interrupt](https://reference.langchain.com/python/langgraph/types/interrupt) that halts execution. The graph state is saved using LangGraph's [persistence layer](/oss/python/langgraph/persistence), so execution can pause safely and resume later.
   > A human
-**A[e021]:** 
+**A[e021]:** fetch HumanInTheLoopMiddleware first than set a middleware and checkpointer, so the state snapshot gets saved. Than interrupter and its wanted behaviour. And the thread_id, so the agent can have a persistent memory.
 
 ## e022 · easy
 **Q:** What is a Command object used for in a handoff tool?
@@ -464,7 +464,7 @@ _notes: concept_
   > Both work by resuming from a prior checkpoint. Nodes before the checkpoint are not re-executed (results are already saved). Nodes after the checkpoint re-execute, including any LLM calls, API requests, and [interrupts](/oss/python/langgraph/interrupts) (which may produce different results).
   > ## Replay
   > Invoke the graph with a prior checkpoint's c
-**A[e024]:** 
+**A[e024]:** ability to inspect, pause, rewind, edit and fork the execution history of the graph - realized by resuming from any checkpoint, a saved snapshpt of an agents state at a given moment.
 
 ## e025 · easy
 **Q:** What is a StateSnapshot in LangGraph?
@@ -525,7 +525,7 @@ _notes: concept_
   > 2. [`Nodes`](#nodes): Functions that encode the logic of your agents. They receive the current state as input, perform some computation or side-effect, and return an updated state.
   > 3. [`Edges`](#edges): Functions that determine which `Node` to execute next based on the current state. They can be conditional branches or fixed transitions.
   > By composing `Nodes` and `Edges`, you
-**A[e027]:** 
+**A[e027]:** Graph Api in Langgraph is the foundational framwork used to build stateful, multi-step ai applications and agentic workflows as directed graphs. It has 4 core buillding blocks: State Schema: the sate  is a shared data structure, every node reads from this state and returns upgrades to it. Nodes: are python functions that execute logic. such as prompting an LLM, executing Python code, querying a vector DB, or calling an API. They can accept current graph state as input and a dictionary containing updated key-value pairs to write back to state as output. Edge: defines the execution oaths between nodes
 
 ## e028 · easy
 **Q:** What does the guardrails page recommend for input validation?
@@ -583,7 +583,7 @@ _notes: concept_
   > 2. **Store**: a [BaseStore](https://reference.langchain.com/python/langchain-core/stores/BaseStore) instance used for [long-term memory](/oss/python/langchain/long-term-memory)
   > 3. **Stream writer**: an object used for streaming information via the `"custom"` stream mode
   > 4. **Execution info**: id
-**A[e030]:** 
+**A[e030]:** In LangChain and LangGraph, the Runtime object serves as a dependency injection mechanism. Instead of using hardcoded global state or polluting the agent's LLM context with non-model dependencies, the Runtime object provides tools, middleware, and graph nodes with direct access to static context, long-term memory, and execution metadata.
 
 ## h001 · hard
 **Q:** In create_agent, what is the difference between passing a model as a string like 'anthropic:claude-sonnet-4-6' versus a model instance?
@@ -638,7 +638,7 @@ _notes: subtle behavior — predicted weak spot_
   > <img src="https://mintcdn.com/langchain-5e9cc07a/-_xGPoyjhyiDWTPJ/oss/images/checkpoints.jpg?fit=max&auto=format&n=-_xGPoyjhyiDWTPJ&q=85&s=966566aaae853ed4d240c2d0d067467c" alt="Checkpoints" width="2316" height="748" data-path="oss/images/checkpoints.jpg" />
   > <Info>
   >   **Agent Server handles checkpointing automa
-**A[h002]:** 
+**A[h002]:** The corpus doesn't document `checkpointer=True`, only explicit checkpointer instances such as `InMemorySaver` or a durable checkpointer passed at compile time.
 
 ## h003 · hard
 **Q:** How do you write a class-based custom middleware with both sync and async hooks?
@@ -1437,7 +1437,7 @@ _notes: interrupts + persistence + checkpointers_
   > <img src="https://mintcdn.com/langchain-5e9cc07a/-_xGPoyjhyiDWTPJ/oss/images/checkpoints.jpg?fit=max&auto=format&n=-_xGPoyjhyiDWTPJ&q=85&s=966566aaae853ed4d240c2d0d067467c" alt="Checkpoints" width="2316" height="748" data-path="oss/images/checkpoints.jpg" />
   > <Info>
   >   **Agent Server handles checkpointing automa
-**A[m006]:** 
+**A[m006]:** To resume a graph paused with `interrupt()`, you send `Command(resume=...)` back into the graph using the same config (matching `thread_id`), and the value passed becomes the return value of the `interrupt()` call; the paused state is not ephemeral but persisted by the checkpointer (e.g. `InMemorySaver`, or a durable checkpointer in production) keyed on that `thread_id`, saved at the moment `interrupt()` is hit so it can later be retrieved and resumed from where it left off.
 
 ## m007 · multi-hop
 **Q:** How do you create a deep agent that uses subagents and persists their memory across runs?
@@ -1747,7 +1747,7 @@ _notes: mcp + tools_
   > Under the hood, tools are callable functions with well-defined inputs and outputs that get passed to a [chat model](/oss/python/langchain/models). The model decides when to invoke a tool based on the conversation context, and what input arguments to provide.
   > <Tip>
   >   For details on how models handle tool calls, see [Tool calling](/oss/python/langchain/models#tool-calling). Trace tool calls and debug errors with [LangSmith](https://smith.langchain.com?utm_source=docs\&utm_medium=cta\&utm_campaign=langsmith-signup\&utm_content=oss-langc
-**A[m016]:** 
+**A[m016]:** thorough the langchain-mcp-adapters library,, we need to create a MultiServerMCPClient, and retrieve the tools server has to offer, and than pass the resulting loo list to our agents through create_deep_agent_ or create_agent
 
 ## m017 · multi-hop
 **Q:** How do you build a multi-agent supervisor workflow and stream its intermediate steps to a UI?
@@ -1780,7 +1780,7 @@ _notes: workflow + streaming_
   > ## Get started
   > ### Basic usage
   > LangGraph graphs expose the [`stream`](https://reference.
-**A[m017]:** 
+**A[m017]:** it requires two parts: graph architecture, and event streaming api. In backend, the central supervisor which wil oing to act as a router, orchestrator must be set up. It will use handoff tools to route tasks to worker agents.
 
 ## m018 · multi-hop
 **Q:** How do you produce structured output from an agent and validate it, then stream partial structured results to the frontend?
@@ -1817,88 +1817,88 @@ _notes: structured output + frontend_
   >   var z = {
   >     object: _shape => stub(),
   >     literal: _value => st
-**A[m018]:** 
+**A[m018]:** To produce and validate structured output from an agent, Pydantics standard model response_format must be configured. Agent would than return the structured_response key of its state.
 
 ## u001 · unanswerable
 **Q:** What is the monthly price of LangSmith's Plus plan?
 _notes: pricing not in /oss/python docs — must say not in corpus_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u001]:** 
+**A[u001]:** The provided documentation excerpts do not specify any information about the question asked.
 
 ## u002 · unanswerable
 **Q:** How do I use create_agent in the JavaScript/TypeScript SDK?
 _notes: corpus is /oss/python only; JS excluded by scope_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u002]:** 
+**A[u002]:** The provided documentation excerpts do not specify any information about the question asked.
 
 ## u003 · unanswerable
 **Q:** Which is better for RAG, LangChain or LlamaIndex?
 _notes: comparison to external framework — corpus-gap / opinion_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u003]:** 
+**A[u003]:** The provided documentation excerpts do not specify any information about the question asked.
 
 ## u004 · unanswerable
 **Q:** What HNSW ef_construction value does Qdrant use by default?
 _notes: vendor-internal detail not in LangChain docs_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u004]:** 
+**A[u004]:** The provided documentation excerpts do not specify any information about the question asked.
 
 ## u005 · unanswerable
 **Q:** What is Anthropic's rate limit for the claude-sonnet-4-6 API?
 _notes: provider limits not documented in corpus_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u005]:** 
+**A[u005]:** The provided documentation excerpts do not specify any information about the question asked.
 
 ## u006 · unanswerable
 **Q:** When will LangGraph v2 be released?
 _notes: future roadmap — corpus-gap_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u006]:** 
+**A[u006]:** The provided documentation excerpts do not specify any information about the question asked.
 
 ## u007 · unanswerable
 **Q:** What is the maximum number of subagents a deep agent can spawn?
 _notes: no such hard limit documented — should say not stated_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u007]:** 
+**A[u007]:** there is no built in maximum on the numner of subagents a deep agent can spawn.
 
 ## u008 · unanswerable
 **Q:** How do I fine-tune an LLM using LangChain?
 _notes: out of scope; LangChain doesn't do training_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u008]:** 
+**A[u008]:** The provided documentation excerpts do not specify any information about the question asked.
 
 ## u009 · unanswerable
 **Q:** What GPU is required to run LangGraph?
 _notes: no hardware requirement documented — corpus-gap_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u009]:** 
+**A[u009]:** The provided documentation excerpts do not specify any information about the question asked.
 
 ## u010 · unanswerable
 **Q:** Who is the CEO of LangChain the company?
 _notes: not covered in technical docs_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u010]:** 
+**A[u010]:** The provided documentation excerpts do not specify the information about question asked.
 
 ## u011 · unanswerable
 **Q:** What is the default embedding model used by the create_agent function?
 _notes: false premise — create_agent has no embedding model; tests hallucination resistance_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u011]:** 
+**A[u011]:** create_agent does not use or accept an embedding model
 
 ## u012 · unanswerable
 **Q:** How do I configure Redis as a checkpointer with connection pooling and TLS?
 _notes: specific vendor config likely beyond corpus — verify; may be partial corpus-gap_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u012]:** 
+**A[u012]:** The provided documentation excerpts do not specify any information about the question asked.
 
 ## u013 · unanswerable
 **Q:** What is the token cost per LangGraph node execution?
 _notes: nodes don't have token cost — false-premise / corpus-gap_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u013]:** 
+**A[u013]:** Nodes do not cost token.
 
 ## u014 · unanswerable
 **Q:** How do I roll back a deployed LangGraph app to a previous version using the CLI?
 _notes: verify against deploy.md; likely not documented — corpus-gap candidate_
 > (unanswerable — expected behavior: decline / 'not in the corpus')
-**A[u014]:** 
+**A[u014]:** i can't, there is no instructions for rolling back a deployed LangGraph app using the cli.
