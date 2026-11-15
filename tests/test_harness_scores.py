@@ -1,9 +1,15 @@
 import json
 import math
 
+import pandas as pd
+
+from sage.evals.abstention import parse_verdict
 from sage.evals.harness import (
+    ABSTAINED,
     MAX_SCORE_ATTEMPTS,
+    _answer_hash,
     _load_scores,
+    _means,
     _merge_score,
     _score_complete,
 )
@@ -40,3 +46,35 @@ def test_scores_from_another_judge_are_ignored_and_latest_row_wins(tmp_path):
     loaded = _load_scores(path, "new-judge")
     assert set(loaded) == {"e002"}
     assert loaded["e002"]["faithfulness"] == 0.5
+
+
+def test_score_of_a_regenerated_answer_is_not_reused(tmp_path):
+    old = {"answer": "first", "retrieved_contexts": ["c"]}
+    new = {"answer": "second", "retrieved_contexts": ["c"]}
+    path = tmp_path / "scores.jsonl"
+    row = _merge_score(None, "e001", "j", FULL, answer_hash=_answer_hash(old))
+    path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+    assert "e001" in _load_scores(path, "j", {"e001": _answer_hash(old)})
+    assert _load_scores(path, "j", {"e001": _answer_hash(new)}) == {}
+
+
+def test_unanswerable_row_is_complete_on_its_abstention_verdict_alone():
+    row = _merge_score(None, "u001", "j", {ABSTAINED: 1.0}, cols=(ABSTAINED,))
+    assert _score_complete(row, (ABSTAINED,))
+    assert not _score_complete(row)  # it carries none of the RAGAS metrics
+
+
+def test_means_ignore_unanswerable_rows():
+    df = pd.DataFrame(
+        [
+            {"category": "easy", **dict.fromkeys(METRIC_COLS, 0.8), ABSTAINED: None},
+            {"category": "unanswerable", **dict.fromkeys(METRIC_COLS, None), ABSTAINED: 1.0},
+        ]
+    )
+    assert _means(df) == dict.fromkeys(METRIC_COLS, 0.8)
+
+
+def test_abstention_verdict_takes_the_last_word_the_judge_says():
+    assert parse_verdict("It could be ANSWERED, but no: DECLINED") == 1.0
+    assert parse_verdict("answered") == 0.0
+    assert parse_verdict("I am not sure.") is None
