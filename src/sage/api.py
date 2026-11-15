@@ -44,4 +44,8 @@ def ask(req: AskRequest) -> dict:
         result = run_answer(req.question, req.k)
     except EmptyIndex as e:
         raise HTTPException(status_code=503, detail=str(e))
-    return {"answer": result.answer, "sources": [asdict(s) for s in result.sources]}
+    return {
+        "answer": result.answer,
+        "strategy": result.strategy,
+        "sources": [asdict(s) for s in result.sources],
+    }

@@ -30,7 +30,8 @@ adapter and registering it — nothing else changes. The query loop is shared by
 | `src/sage/loader.py` | Sitemap parse (follows sitemap indexes) + concurrent markdown-page fetch → `Page` objects, per source. |
 | `src/sage/ingest.py` | Ingestion pipeline entry point: `python -m sage.ingest`. |
 | `src/sage/assembly.py` | Arranges ranked chunks into context ("edges-first" ordering, addressing lost-in-the-middle). |
-| `src/sage/service.py` | `answer(question, k) -> Answer{answer, sources}` — the shared query loop used by both CLI and API. Raises `EmptyIndex` if the store is empty. |
+| `src/sage/service.py` | `answer(question, k) -> Answer{answer, sources, strategy}` - the shared query loop used by both CLI and API: runs the `RetrievalStrategy` named by `SAGE_STRATEGY` (default `vector`), arranges, generates. `EmptyIndex` (from `ports.py`) propagates if the strategy's store is empty. |
+| `src/sage/adapters/vector_strategy.py` | The `vector` strategy: dense search, optional BM25 + RRF, rerank, cut to k. Graph strategies register beside it and never call it. |
 | `src/sage/api.py` | FastAPI app: `POST /ask {question, k?}` → `{answer, sources}`, `GET /health`. CORS is wide open (`allow_origins=["*"]`) — dev only. |
 | `src/sage/ask.py` | Thin CLI over `service.answer`: `python -m sage.ask "question" [-k N]`. |
 | `src/sage/models.py` | `Chunk` (incl. `make_id`), `ScoredChunk`, `Page`. |

@@ -12,4 +12,5 @@ from sage.adapters import (  # noqa: F401
     openrouter_embedder,
     qdrant_store,
     rerank,
+    vector_strategy,
 )

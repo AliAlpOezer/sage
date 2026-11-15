@@ -86,6 +86,7 @@ VARIANTS: dict[str, tuple[dict, str]] = {
 # override the collection. Retrieval stages are pinned off too, so the app serving
 # hybrid + rerank never leaks into the baseline arm; variants switch them on.
 EVAL_CORPUS = {
+    "strategy": "vector",
     "sources": ("langchain",),
     "collection": "langchain-docs",
     "qdrant_url": "",
@@ -136,6 +137,7 @@ def phase_generate(name: str, settings: Settings) -> None:
                     "question": t.question,
                     "answer": ans.answer,
                     "generator": model,
+                    "strategy": ans.strategy,
                     "retrieved_contexts": [s.text for s in ans.sources],
                     "retrieved_urls": [s.url for s in ans.sources],
                 }
@@ -348,7 +350,7 @@ def _write_run(name: str, df: pd.DataFrame, settings: Settings, n_total: int, ge
         ),
         "",
         (
-            f"Config: chunker=`{settings.chunker}` top_k={settings.top_k} "
+            f"Config: strategy=`{settings.strategy}` chunker=`{settings.chunker}` top_k={settings.top_k} "
             f"assembly=`{settings.assembly_order}` reranker=`{settings.reranker}`"
             f"{f' retrieve_k={settings.retrieve_k}' if settings.reranker != 'none' else ''} "
             f"collection=`{settings.collection}`"
@@ -400,6 +402,7 @@ def _write_run(name: str, df: pd.DataFrame, settings: Settings, n_total: int, ge
         "generator": generator,
         "judge": settings.resolved_judge_model,
         "config": {
+            "strategy": settings.strategy,
             "chunker": settings.chunker,
             "top_k": settings.top_k,
             "assembly_order": settings.assembly_order,

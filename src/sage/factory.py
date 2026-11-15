@@ -13,6 +13,7 @@ from sage.ports import (
     Embedder,
     Generator,
     Reranker,
+    RetrievalStrategy,
     SparseRetriever,
     VectorStore,
 )
@@ -23,6 +24,7 @@ _VECTOR_STORES: dict[str, Callable[[Settings], VectorStore]] = {}
 _SPARSE_RETRIEVERS: dict[str, Callable[[Settings], SparseRetriever]] = {}
 _RERANKERS: dict[str, Callable[[Settings], Reranker]] = {}
 _GENERATORS: dict[str, Callable[[Settings], Generator]] = {}
+_STRATEGIES: dict[str, Callable[[Settings], RetrievalStrategy]] = {}
 
 # Embedded qdrant holds an exclusive per-process file lock on its storage dir,
 # so there can be only ONE client per process. Building a store per request and
@@ -82,6 +84,14 @@ def register_generator(name: str):
     return decorate
 
 
+def register_strategy(name: str):
+    def decorate(builder: Callable[[Settings], RetrievalStrategy]):
+        _STRATEGIES[name] = builder
+        return builder
+
+    return decorate
+
+
 def make_chunker(settings: Settings) -> Chunker:
     _load_adapters()
     return _build("chunker", _CHUNKERS, settings.chunker, settings)
@@ -120,6 +130,11 @@ def make_reranker(settings: Settings) -> Reranker:
 def make_generator(settings: Settings) -> Generator:
     _load_adapters()
     return _build("generator", _GENERATORS, settings.generator, settings)
+
+
+def make_strategy(settings: Settings) -> RetrievalStrategy:
+    _load_adapters()
+    return _build("strategy", _STRATEGIES, settings.strategy, settings)
 
 
 def _build(kind: str, registry: dict, name: str, settings: Settings):

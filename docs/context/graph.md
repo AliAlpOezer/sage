@@ -1,6 +1,6 @@
 # Knowledge graph - design record
 
-Updated: 2026-11-15 · Status: design, nothing built · Owner of open calls: Alp
+Updated: 2026-11-15 · Status: design; strategy port built, no graph code yet · Owner of open calls: Alp
 
 Self-contained: everything needed for graph work is in this file.
 
@@ -183,9 +183,11 @@ labeled by Alp (labeling is never delegated). Blocks claims, not building.
 | Strategies (`RetrievalStrategy` port) | question -> context | autonomous, read-only | store down: raises, no fallback |
 | Eval harness | scores per strategy | autonomous, resumable | existing |
 
-`RetrievalStrategy.retrieve(question, k) -> list[ScoredChunk]` is the new port; today's
-dense/hybrid/rerank flow in `service.answer` becomes the `vector` strategy unchanged, and
-the generator stays shared.
+`RetrievalStrategy.retrieve(question, k) -> list[ScoredChunk]` is the port (built
+2026-11-15, `ports.py`); the dense/hybrid/rerank flow moved unchanged into the `vector`
+strategy (`adapters/vector_strategy.py`), picked by `SAGE_STRATEGY`, and the generator
+stays shared. `Answer.strategy`, the API response and `answers.jsonl` name the strategy;
+evals pin `strategy=vector` unless a variant overrides it.
 
 ## Seams
 

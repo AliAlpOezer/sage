@@ -133,6 +133,10 @@ learning trail.
 5. Neo4j graph from doc structure first (page links, heading tree, class mentions,
    zero LLM cost), LLM entity extraction as the paid comparison arm; each graph strategy
    stands alone (fusion with RRF optional). Design record: `graph.md` (decision nodes G1-G15).
+   Built 2026-11-15 on branch `graph-design`: the `RetrievalStrategy` port, with today's
+   flow as the `vector` strategy (`SAGE_STRATEGY`); 62 tests pass, real `sage.ask` verified.
+   Next build step needs Alp: AuraDB Free instance + `NEO4J_URI`/`NEO4J_USERNAME`/
+   `NEO4J_PASSWORD` in `.env`, and his pick of drills (`graph.md` open question 4).
 6. Machine limit: 3.6 GB RAM, Docker not running. Local Neo4j + Qdrant server will not
    fit; the free managed tiers (AuraDB Free, Qdrant Cloud free) are the realistic
    "free" option, and both pause when idle.

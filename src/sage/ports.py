@@ -70,6 +70,22 @@ class Reranker(Protocol):
         ...
 
 
+class EmptyIndex(RuntimeError):
+    """A strategy's store holds nothing to retrieve: its build/ingest hasn't run."""
+
+
+@runtime_checkable
+class RetrievalStrategy(Protocol):
+    def retrieve(self, question: str, k: int) -> list[ScoredChunk]:
+        """Return the `k` chunks this strategy judges best for `question`, best-first.
+
+        Each strategy answers from its own store alone and never calls another
+        strategy, so a score can be attributed to it. A strategy that cannot
+        answer raises; there is no silent fallback to another strategy.
+        """
+        ...
+
+
 @runtime_checkable
 class Generator(Protocol):
     def generate(self, question: str, context: Sequence[ScoredChunk]) -> str:

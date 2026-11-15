@@ -88,6 +88,9 @@ class Settings:
     qdrant_url: str = ""
     qdrant_api_key: str = ""
     collection: str = "langchain-docs"
+    # Which RetrievalStrategy answers: "vector" is the Qdrant flow below (dense,
+    # optional BM25 + RRF, optional rerank); graph strategies register their own names.
+    strategy: str = "vector"
     assembly_order: str = "edges"  # edges | naive (Day-33 Lost-in-the-Middle knob)
     sparse_retriever: str = "none"  # none | bm25 (Day-36 hybrid search). "none" = dense-only baseline.
     reranker: str = "none"  # none | bge | cohere (Day-37 precision stage). "none" = passthrough baseline.
@@ -150,6 +153,7 @@ class Settings:
             qdrant_url=os.getenv("SAGE_QDRANT_URL", d.qdrant_url),
             qdrant_api_key=os.getenv("QDRANT_API_KEY", d.qdrant_api_key),
             collection=os.getenv("SAGE_COLLECTION", d.collection),
+            strategy=os.getenv("SAGE_STRATEGY", d.strategy),
             assembly_order=os.getenv("SAGE_ASSEMBLY_ORDER", d.assembly_order),
             sparse_retriever=os.getenv("SAGE_SPARSE_RETRIEVER", d.sparse_retriever),
             reranker=os.getenv("SAGE_RERANKER", d.reranker),
