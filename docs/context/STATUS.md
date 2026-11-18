@@ -151,7 +151,7 @@ learning trail.
   needs G15's aggregate questions. "Source page retrieved" reads none for it (G21).
 - Next build step: `graph-entity` (G10: LLM extraction into its own namespace, G11, G13).
 - 2026-11-18: graph work committed (`e604113`), README rewritten for newcomers, graph
-  knobs added to `.env.example`; branch `graph-design` pushed to origin (repo private).
+  knobs added to `.env.example`; branch `graph-design` pushed, PR #3 open to master; repo made public (Alp, 2026-11-18).
 
 ## Blocked
 
