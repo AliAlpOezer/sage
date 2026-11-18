@@ -1,7 +1,7 @@
 [project]
 name = "sage"
 version = "0.1.0"
-description = "Add your description here"
+description = "RAG over technical docs, built from scratch: hybrid search, reranking and a knowledge graph behind swappable ports."
 readme = "README.md"
 authors = [
     { name = "AliAlpOezer", email = "a.oezer@flex.net" }

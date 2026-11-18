@@ -150,6 +150,8 @@ learning trail.
   is expected to lose (it answers passage questions with keyword `CONTAINS`); its claim
   needs G15's aggregate questions. "Source page retrieved" reads none for it (G21).
 - Next build step: `graph-entity` (G10: LLM extraction into its own namespace, G11, G13).
+- 2026-11-18: graph work committed (`e604113`), README rewritten for newcomers, graph
+  knobs added to `.env.example`; branch `graph-design` pushed to origin (repo private).
 
 ## Blocked
 
