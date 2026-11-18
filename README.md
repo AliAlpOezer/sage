@@ -7,6 +7,22 @@ project. It does not use LangChain or LlamaIndex to do the RAG part: chunking, e
 search, fusion, reranking, context assembly and the knowledge graph are all hand-written,
 so every step is visible and can be measured on its own.
 
+**Highlights**
+
+- **Hybrid search**: dense vectors in Qdrant plus BM25 keyword search, merged with a
+  hand-written Reciprocal Rank Fusion (RRF).
+- **Reranking**: a Cohere cross-encoder re-scores the candidates; the biggest single
+  gain in the evals (context precision 0.66 to 0.90).
+- **Knowledge graph on Neo4j**: the docs' structure (pages, headings, passages, links,
+  code symbols) as a graph, searched with one-hop expansion (`graph-local`) or with
+  LLM-written Cypher queries (`text2cypher`, GraphRAG style).
+- **Evaluated with RAGAS**: 36 hand-labeled questions, faithfulness, relevancy,
+  precision and recall per variant, plus a check that sage declines what the docs
+  cannot answer.
+- **Six doc sites**: LangChain, Langfuse, Qdrant, Neo4j, neo4j-graphrag and RAGAS.
+- **Ports and adapters**: every stage is swappable from `.env`, served over a CLI and a
+  FastAPI endpoint.
+
 ```text
 $ uv run python -m sage.ask "How do I add memory to an agent?"
 
