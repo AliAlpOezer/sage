@@ -30,7 +30,8 @@ def main() -> None:
     print(result.answer)
     print("\nSources:")
     for s in result.sources:
-        print(f"  [{s.n}] {s.title} — {s.url}  (score {s.score:.3f})")
+        where = f" - {s.url}" if s.url else ""
+        print(f"  [{s.n}] {s.title}{where}  (score {s.score:.3f})")
 
 
 if __name__ == "__main__":

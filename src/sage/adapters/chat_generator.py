@@ -44,7 +44,8 @@ def _render_excerpts(context: Sequence[ScoredChunk]) -> str:
     parts = []
     for i, scored in enumerate(context, start=1):
         c = scored.chunk
-        parts.append(f"[{i}] {c.title} ({c.source_url})\n{c.text}")
+        where = f" ({c.source_url})" if c.source_url else ""
+        parts.append(f"[{i}] {c.title}{where}\n{c.text}")
     return "\n\n---\n\n".join(parts)
 
 
@@ -63,12 +64,15 @@ class _ChatGenerator:
 
     def generate(self, question: str, context: Sequence[ScoredChunk]) -> str:
         user = f"Documentation excerpts:\n\n{_render_excerpts(context)}\n\nQuestion: {question}"
+        return self.complete(_SYSTEM, user)
+
+    def complete(self, system: str, user: str) -> str:
         payload = {
             "model": self.model,
             "max_tokens": self.max_tokens,
             "stream": False,
             "messages": [
-                {"role": "system", "content": _SYSTEM},
+                {"role": "system", "content": system},
                 {"role": "user", "content": user},
             ],
         }
@@ -118,9 +122,9 @@ class OmniRouteGenerator(_ChatGenerator):
             timeout=_TIMEOUT, headers={"Authorization": f"Bearer {OMNIROUTE_API_KEY}"}
         )
 
-    def generate(self, question: str, context: Sequence[ScoredChunk]) -> str:
+    def complete(self, system: str, user: str) -> str:
         try:
-            return super().generate(question, context)
+            return super().complete(system, user)
         except httpx.ConnectError as e:
             # Distinguish "nothing is listening on :20128" from a model-side
             # failure - opposite problems with opposite fixes.

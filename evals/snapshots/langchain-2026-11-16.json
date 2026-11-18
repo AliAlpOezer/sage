@@ -1,0 +1,967 @@
+{
+ "name": "langchain-2026-11-16",
+ "id": "3533e57389f9",
+ "created": "2026-11-16",
+ "pages": [
+  {
+   "url": "https://docs.langchain.com/oss/python/common-errors.md",
+   "source": "langchain",
+   "sha256": "b93c6a31e07a4d92532b2764e8aea0dee9fa09dd015d6bb742fc04488e96a5c1"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/concepts/context.md",
+   "source": "langchain",
+   "sha256": "f409c6118f41fdadb0244f628e866d992cc4c29d2b348f4820ed15a6b8fe0c5c"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/concepts/human-in-the-loop.md",
+   "source": "langchain",
+   "sha256": "ff21bfba90ebeed582970a24e2fbc764a2559fdcf8b440015280793fbdae3465"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/concepts/memory.md",
+   "source": "langchain",
+   "sha256": "7cba0710f88942a51b1b5024a27825270afb951db98727035a1a10cdd6583922"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/concepts/products.md",
+   "source": "langchain",
+   "sha256": "f3d9179c35c442cfc0066c997d2e8890b74a8afc69bd6454e00edbe32970ccb5"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/concepts/providers-and-models.md",
+   "source": "langchain",
+   "sha256": "eab04fb57b4076e4259117ce188cd605da94e0dbb39f0312910b3d7e25322b92"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/contributing/code.md",
+   "source": "langchain",
+   "sha256": "b6fb006eb0a2bae603ff1308be2fc3706728bfcaed62558f5053ac7a7f87925c"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/contributing/comarketing.md",
+   "source": "langchain",
+   "sha256": "6c0dd603e5a2693587d59803d001a77f7d5a1b728364e9f8220efae1c1911007"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/contributing/documentation.md",
+   "source": "langchain",
+   "sha256": "728c1a1f9b048f98031ae74bb73e954b3d7a24f6f0c34e780a37a5b65486f90e"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/contributing/implement-langchain.md",
+   "source": "langchain",
+   "sha256": "ab78f63d09ac8822cffae1289174e2864adffa272250af4218aedfd7313691ce"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/contributing/integrations-langchain.md",
+   "source": "langchain",
+   "sha256": "d47f72b1eaa860e354c8cd43e34294842bb028449b800e76eccc3d216a928ce1"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/contributing/overview.md",
+   "source": "langchain",
+   "sha256": "0dccfbdd205736ee1c508bc7926de675e546daf3dc6dff5cd13fce3ca61950cd"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/contributing/publish-langchain.md",
+   "source": "langchain",
+   "sha256": "4657967a065d93b53a0a8a3e87375f13a6bc90e2a9430a32fc08ce2bacb89576"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/contributing/standard-tests-langchain.md",
+   "source": "langchain",
+   "sha256": "71096c50eb9be46ddbba782f4b19f3fb940f30a9de73ae2a6b620e47488fedba"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/acp.md",
+   "source": "langchain",
+   "sha256": "f99e9a967b1d441d11ca74a441becb1272bd594d555ed9a18d077409edcc3901"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/ag-ui.md",
+   "source": "langchain",
+   "sha256": "fe55b126588297da57c0480ce11d1550b55f5289a0a1d21826351c7a29cdb9e6"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/async-subagents.md",
+   "source": "langchain",
+   "sha256": "34e1a236e59a1bbba1aea80c2315658e00e074a49b314b2d8a6db736e76aaf51"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/backends.md",
+   "source": "langchain",
+   "sha256": "0003b9d195ea724226eac043479a4a1d7f9d961d9625de1589cd09773c187813"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/browser-use.md",
+   "source": "langchain",
+   "sha256": "61fe3424fd84cbe599b5be8170d473535b4b1d3d46f90ac72fde2dfb2c31b2cb"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/comparison.md",
+   "source": "langchain",
+   "sha256": "c0f227c7def8db3cbb5145124e25a8f434a2e45e36f0313aff6806b04c7e2bfa"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/content-builder.md",
+   "source": "langchain",
+   "sha256": "341f9b9e3c5d882aec00f59c2d523d343ba02e78212987bf07c0400bd21c8bb8"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/context-engineering.md",
+   "source": "langchain",
+   "sha256": "ff0d7b6f9abeb821b43b2b0e9e8ce54e82c848fbf27129bf60887556fd680dbb"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/customization.md",
+   "source": "langchain",
+   "sha256": "45d05e86eebbccef7741969efbf741d536544500cb3b02a8fd886e9def21511a"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/data-analysis.md",
+   "source": "langchain",
+   "sha256": "2b08b669aeb1d9c99e62783369b0250511bb898e9d9241cbaeb41bc2a4173fb9"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/deep-research.md",
+   "source": "langchain",
+   "sha256": "2519cc5f3aba2d953a74337b4864328244b106115f56bd5cc390ecde0177c691"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/dynamic-subagents.md",
+   "source": "langchain",
+   "sha256": "547117dd40482de85f6da9d99655bf58b15e1b5e1de0de2fd168105be423de76"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/event-streaming.md",
+   "source": "langchain",
+   "sha256": "26e7ef05559586c372f73f4f58fd3a0b160d407a02aade1c0ea5741d5ced102c"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/fault-tolerance.md",
+   "source": "langchain",
+   "sha256": "21d3e37f440737620c041329d8b318d0b45a11ff688a768c6490e9b711bd63fb"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/frontend/overview.md",
+   "source": "langchain",
+   "sha256": "36c8cecf3f988176f301983f7e9c5e0f96ef7af1cbfac4cebe63ff6227d7162b"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/frontend/sandbox.md",
+   "source": "langchain",
+   "sha256": "b878fb8439ae77abb29c53a3cc036c1699e7c3994006f46c5a23396f4a5381ca"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/frontend/subagent-streaming.md",
+   "source": "langchain",
+   "sha256": "8d376dc4deb32bf3f836621a444fafac813a27c0c282f53679c90f1b1b8881e5"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/frontend/todo-list.md",
+   "source": "langchain",
+   "sha256": "53ec8e0e905d1794c3644e65ec8d98735c5332a16cb81b34d47ed24c57ddbf36"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/going-to-production.md",
+   "source": "langchain",
+   "sha256": "136eeb8e7bc8f108fd668cb95a486efde364d3fc84ecdaee3f5ce927da84c869"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/human-in-the-loop.md",
+   "source": "langchain",
+   "sha256": "1e482f0ee323e884243e962662b335d3c6c9bf104da7b4610689a9c3ddf3085e"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/interpreters.md",
+   "source": "langchain",
+   "sha256": "33f2411be235f45dd17dae9a6b10cadcf79c00db53156e9f64bd1d0727729a0f"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/memory.md",
+   "source": "langchain",
+   "sha256": "a84b82debea8ee6fde0c80debdca995c692106823e4c5073d457f7481d32f026"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/models.md",
+   "source": "langchain",
+   "sha256": "be4c7b14cbd3a8662aea2a88b35d454e69974c565931a2d2df42d98988ef4b33"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/multimodal.md",
+   "source": "langchain",
+   "sha256": "e5b4be0df31b9adefe0d484e74a1584b4ee87d8d65cbb76ad9b56a83829ad385"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/overview.md",
+   "source": "langchain",
+   "sha256": "7f5de5a4cebc52eab49c7f027c0a2d822dd834888c0e283e82404ee8f5ac29c0"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/permissions.md",
+   "source": "langchain",
+   "sha256": "4fc112ac12c0952dc054adb70301c36e01322a4ee7dfb121877c22dcf7d0b3d9"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/profiles.md",
+   "source": "langchain",
+   "sha256": "15fe981d7b7f769644a2175af22aed48eca48983f47fcce1fbd3d6d3544bc76c"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/quickstart.md",
+   "source": "langchain",
+   "sha256": "002ecb38dc8c33a0622427ce93145b78392349a2aea2db6e9b09c6543f2d4086"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/rag.md",
+   "source": "langchain",
+   "sha256": "0a8a6fe06e5434baa75591063cf7303b3d009dd3d7f6e82d5d9e011a1038e3d4"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/retrieval.md",
+   "source": "langchain",
+   "sha256": "6d1682eda969a20f36c719cafe56b77a0fa79f727f487348a5421c0835df5e93"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/rubric.md",
+   "source": "langchain",
+   "sha256": "6919f8e7f935575620da89397254136d5a345f74c2fe8ff09ee8d626766d3613"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/sandboxes.md",
+   "source": "langchain",
+   "sha256": "e9efa33d53256e2a781b3345a105e2a0dc7e817ccd395fb3de9e45f129ac74f4"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/skills.md",
+   "source": "langchain",
+   "sha256": "b5480ae32715fd44c7e51a6fd4205ff8baabd0796ad8f46663d96fccd7f34943"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/streaming.md",
+   "source": "langchain",
+   "sha256": "dd8d3413b2662d572b93bdaa874e1ddaf7cfc11f4237ee211fea2e2b2e689efa"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/subagents.md",
+   "source": "langchain",
+   "sha256": "f8531602ca3300c07ff65a31349a971eb179ab092d80946bd6c40b2f86dbd0fc"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/deepagents/tools.md",
+   "source": "langchain",
+   "sha256": "8d11188af6ae588b9fc6bcb61414d2c0dd1fbc699a2c8d04b51308095a850873"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/backends.md",
+   "source": "langchain",
+   "sha256": "23416d53413407e3fe111fe17e270a199c88141abeca6412cb48d8f8a4253645"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/chat.md",
+   "source": "langchain",
+   "sha256": "e8a5dd5d20320f407feaa79bc5fb198cf828fee71428241e279bbaa66f8c8177"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/checkpointers.md",
+   "source": "langchain",
+   "sha256": "dced751003e0656a092d0990bd964530cab0b27b2ac675c344e46705b0caba1f"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/document_loaders.md",
+   "source": "langchain",
+   "sha256": "cc6ae0f22e4c3471eec6b1ff577ef331705f73a694db24bf26ec487e7c55e521"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/embeddings.md",
+   "source": "langchain",
+   "sha256": "359d16cabc158b4f2ed8d6d187b3293fc5f4cbe0e742032427248f5a5b8572b7"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/long-term-memory.md",
+   "source": "langchain",
+   "sha256": "41618d1d29806fc409adee90e18fb1b0b58d40fe24c8f854c820e97841e5f25d"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/middleware.md",
+   "source": "langchain",
+   "sha256": "9dce5e82fbbdad823dc98a9b8638ff077aac630619775a36132de6605854f39d"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/providers/all_providers.md",
+   "source": "langchain",
+   "sha256": "30b79305665245d1fa9ebbda0716f5d8a66f33ce4ec80ac0dfb643ccc705b797"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/providers/anthropic.md",
+   "source": "langchain",
+   "sha256": "97e0707521123ef40524db5289cb2eeee73ac2cf7b6d24db934a03fa1a05a523"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/providers/aws.md",
+   "source": "langchain",
+   "sha256": "c912618c0305be215ab67da9f76efeb8f3d881defe406779b2fd7d71ce55a33d"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/providers/browserbase.md",
+   "source": "langchain",
+   "sha256": "e474e8c2fc9eea34e970f281041424e3c8c21828a510bba648ca265eeb49690b"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/providers/fireworks.md",
+   "source": "langchain",
+   "sha256": "03346587018ac3b1d3fb867ee7dc3718f7a7b1122e1de0441bbfaf6b9e071078"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/providers/google.md",
+   "source": "langchain",
+   "sha256": "9a6d7251764cc3ce525a82d43cde9736d99d3ddf31398b4659604a37e8f2d307"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/providers/groq.md",
+   "source": "langchain",
+   "sha256": "839faf450d060e606959f479db1a71494c270f35204f800b6acad9c2cbb36740"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/providers/huggingface.md",
+   "source": "langchain",
+   "sha256": "57a6885c94afd1f901365aad28d54641c05d995214e27c53afed753d6d33642b"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/providers/microsoft.md",
+   "source": "langchain",
+   "sha256": "f1c45679f8a2ee37860960c32517f81ce09222a3f6088c73a8819a3c01fe5e24"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/providers/nvidia.md",
+   "source": "langchain",
+   "sha256": "cc126ffce1437f095fd5aee67d8a836ad190af43931bff44290fc8a3b5fa7a6b"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/providers/ollama.md",
+   "source": "langchain",
+   "sha256": "0bae1a8618485f05743c2cbbab6f4dccf839d0887df49a944eefe0a1fd8aee29"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/providers/openai.md",
+   "source": "langchain",
+   "sha256": "9628cca1df1e5d6fb7b5d0e66d4d8bb28d1d89b1be325aef41a8abd637061a36"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/providers/overview.md",
+   "source": "langchain",
+   "sha256": "7f38c682b7c3d8537f159e38f8ea4f48421e33144deea20a838946f6fa8e16ea"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/retrievers.md",
+   "source": "langchain",
+   "sha256": "76da901d50b541064f0fd9a7066d99815abc696c46f56f8b64ddccb4ad68f531"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/sandboxes.md",
+   "source": "langchain",
+   "sha256": "a338d13488babff344c7ec4b984deb49fe08869bdab6be9b2e58203ec8ad15ef"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/splitters.md",
+   "source": "langchain",
+   "sha256": "ad4dae40be18b097925453202e4752b08285fb4eba8f900d4d638cda3643450c"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/tools.md",
+   "source": "langchain",
+   "sha256": "176b332abc0366e5b43d81c0d0936a58c53646f634ba3c1516cc6c880c5d95ed"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/integrations/vectorstores.md",
+   "source": "langchain",
+   "sha256": "6971aacd50787732147a6d6deddf55f0100396e9d471e85f1cc543e8a57a7459"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/agents.md",
+   "source": "langchain",
+   "sha256": "110685c98950dcf46b8e6e432bd02eec5cd5872a1c013eec4e5756c3a9cc4897"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/component-architecture.md",
+   "source": "langchain",
+   "sha256": "1f64975f2fad8ecef4fff91ed82d73e03245ca9d83b5796707a28731a0c9e573"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/context-engineering.md",
+   "source": "langchain",
+   "sha256": "40592d21b825ef13c37567399a38c777a53167a2f4af893aeca68fcc81e5a266"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/deep-agent-from-scratch.md",
+   "source": "langchain",
+   "sha256": "8b8d41ad3d53f55ae143099132e331e089552017f243f7693060b7ced48abed0"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/deploy.md",
+   "source": "langchain",
+   "sha256": "79982a047a45ae2bb5c2396d8d687233a4db10b134c98f758537cd4d5aafc6d0"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/event-streaming.md",
+   "source": "langchain",
+   "sha256": "71c305bc99566abd4c6ff190a61e40346a7c752af216da64c5894bfd5c4f071a"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/branching-chat.md",
+   "source": "langchain",
+   "sha256": "ab70d98e30496e065151adacc5ed8f1dd0a9746d3683d0a82fb319f99dd23f01"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/controlled-generative-ui.md",
+   "source": "langchain",
+   "sha256": "ba5f4bba5822421161ab3b238a650dbfa3ea8e0041bc1daf4dc833506e0d04e7"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/declarative-generative-ui.md",
+   "source": "langchain",
+   "sha256": "17ec41b116e9b8a44962d4519a238333ddaa2f5e2b6b8f5ba76a68248e9faab1"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/generative-ui-overview.md",
+   "source": "langchain",
+   "sha256": "f5cf5c24ed87c82d4e1f0e7ca19f376686354db6e15cba06f5e415c6e9f54b69"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/headless-tools.md",
+   "source": "langchain",
+   "sha256": "80a2a0e35c4d3881c01e9cf30744f8ca382f2a5dc352ad6550aec8d06fdd822e"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/human-in-the-loop.md",
+   "source": "langchain",
+   "sha256": "91077e75a5ab5aee05c4f32236a6273f7a4f2ec6b4bfdda010c8159b68e9021e"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/integrations/ai-elements.md",
+   "source": "langchain",
+   "sha256": "7cfdfaa9beacdb6cac28bf69ac897d55fd5c37225af37117a9e2267ed17f2c6e"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/integrations/assistant-ui.md",
+   "source": "langchain",
+   "sha256": "6cea6d2d932f0125b42ec48d6d6746ec239b7a171acc18c894ee2b4ba3de046f"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/integrations/copilotkit.md",
+   "source": "langchain",
+   "sha256": "47818d5861430e9d591cadcdfbaa021f4d0eff2f11319d7a7a98a781a6a31f54"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/integrations/openui.md",
+   "source": "langchain",
+   "sha256": "a44253cd48113c06bcfa2aefc467ca665112858acf5973bd3c92bb51085e3f8f"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/integrations/overview.md",
+   "source": "langchain",
+   "sha256": "53b0dfc7ad276e39bca8b25e6f7f7c749429dff18ea7d72849735040a7f3c6cc"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/join-rejoin.md",
+   "source": "langchain",
+   "sha256": "1aa64daa9ccdb01b670a40c01c18c518db5d14484e88fe2d1baa506098d93ad8"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/markdown-messages.md",
+   "source": "langchain",
+   "sha256": "34f5d4a3190b56182a414bc6ea7beb40290bfec1d5b9c3aae724fefe33262d9a"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/message-queues.md",
+   "source": "langchain",
+   "sha256": "c10810e4175077ac8c8358aa848ed1a27f344b5fa83afb3a7834b2fd2fbae10c"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/open-ended-generative-ui.md",
+   "source": "langchain",
+   "sha256": "aa759008096e0c2d15c1a697806917cce33191fec64c8c1f993edae3f24933f5"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/overview.md",
+   "source": "langchain",
+   "sha256": "b238800b7b0b920f373165dbf7d048b40345da3cf788440093975063f1f12c9e"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/reasoning-tokens.md",
+   "source": "langchain",
+   "sha256": "eb3dd53472d7288783d5a11782445cd25720b85d5cc02477f3847ded5edb266c"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/structured-output.md",
+   "source": "langchain",
+   "sha256": "9c3a90ee4433284a541980ddc2888f0ff7dd835969a1937e909652621a428eea"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/time-travel.md",
+   "source": "langchain",
+   "sha256": "be2135a3f4f29e7028b4aa379b383d7429f58df6c63b33283663a9c24dd55781"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/frontend/tool-calling.md",
+   "source": "langchain",
+   "sha256": "7924c64ed08bddd3a46b710c07abfda5b8578077b1230a9c54178b43bcbbf300"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/get-help.md",
+   "source": "langchain",
+   "sha256": "70805ae24ba24bf912e8b4793c7ad4c135aef59c8a86a2353bb3bde930e2b99f"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/guardrails.md",
+   "source": "langchain",
+   "sha256": "166d943feb283a503a365b9e87cf0dcc015eea3ffc787a577515b5bb4ccb619c"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/human-in-the-loop.md",
+   "source": "langchain",
+   "sha256": "c0fa3c60841f0d75a6c6c9f25285aa3d6b62ada88c09132cc2f899a2b95ffab4"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/install.md",
+   "source": "langchain",
+   "sha256": "e90b95877cc6d9a9decd1adab80d875c299083c0145ece6f85bdea7df3fc7fe5"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/knowledge-base.md",
+   "source": "langchain",
+   "sha256": "6ea2e5f04ed83d4e3c7c6799003e28576db1f48a3dc2b7e2e3869704d62fd03e"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/long-term-memory.md",
+   "source": "langchain",
+   "sha256": "13d8136b013112249f32177d91498416b8232716f026c064350ae3f1f961e1fb"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/mcp/auth.md",
+   "source": "langchain",
+   "sha256": "b5daf880340ba5b2b7e9f2be9a8b57e9562c5fe613d6b9002f7191f1ba1a53e1"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/mcp/connections.md",
+   "source": "langchain",
+   "sha256": "75b12ad2f057b5fca7be18a878351bd0129b5cf92dc46a36b12ef3739925cf6c"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/mcp.md",
+   "source": "langchain",
+   "sha256": "d6af4351b236673d7e02d445d439c720f72d5ae831315bd52e7b88d9275a03dd"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/mcp/tools.md",
+   "source": "langchain",
+   "sha256": "aca8a8dd91740398fbe3ccd00bd4116d737b3129fef49c63ac3b4429ab43718e"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/messages.md",
+   "source": "langchain",
+   "sha256": "7cca80b7a26886ab4ed323676e0ddfefb5fc9af5e31eef1356ee1a05110af1eb"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/middleware/built-in.md",
+   "source": "langchain",
+   "sha256": "dbccf65a8c0b9b41d66593afe2af0395e98e8faf79fd19c03ddfe54dc8bf0383"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/middleware/custom.md",
+   "source": "langchain",
+   "sha256": "a4dc96cb9ebf12d5d7e738b13e2f131a83b2b305b940b4488149a14940628c3a"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/middleware/overview.md",
+   "source": "langchain",
+   "sha256": "441512c6d7f67823604821d003f7c990e62d7a355dfe9c0dace7eaaebcc1fafb"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/models.md",
+   "source": "langchain",
+   "sha256": "78d3b28387f91ef111f51d3b14d9162434551441190244132e268b82dd527746"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/multi-agent/custom-workflow.md",
+   "source": "langchain",
+   "sha256": "f400da7aad2e388c7c763f0efb7728f667fe85c97836d37b7b8ee110634cd2a2"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/multi-agent/handoffs.md",
+   "source": "langchain",
+   "sha256": "7aad4b6601cfb78220a2039a65b2873b00c811d2ceb1b8014a2a29900e9c191c"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/multi-agent/handoffs-customer-support.md",
+   "source": "langchain",
+   "sha256": "a510832552f60d7ee05335c769c10c03fc0dc37dcd1a4e52a9c7f8f4f2a2f20b"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/multi-agent.md",
+   "source": "langchain",
+   "sha256": "3413c7f779a8abdc37d0925da3f9cfc0b6f37cab1acd724ff61f271922ea47ec"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/multi-agent/router.md",
+   "source": "langchain",
+   "sha256": "0727c795e5268749e6c9ef0719a01962e1245da7f812ee7c99bbaf06b5e09a8f"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/multi-agent/router-knowledge-base.md",
+   "source": "langchain",
+   "sha256": "452d58d95f16a80f4633291fc11e89a7b3659e0941d2fdb4f623c49145e64797"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/multi-agent/skills.md",
+   "source": "langchain",
+   "sha256": "4f604a57d8a6f12db87a4feee77b967fc38a087091d4f970e592e0d46d189501"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/multi-agent/skills-sql-assistant.md",
+   "source": "langchain",
+   "sha256": "cf81dfe8c4950a72af87511f61cd5942314a5d666bec89ccca9f1951e61a25b1"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/multi-agent/subagents.md",
+   "source": "langchain",
+   "sha256": "2307781d8a2d065ac67942bdd5ac5cb75a788ca7c334ee8a724c3f0a31fb0de5"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/multi-agent/subagents-personal-assistant.md",
+   "source": "langchain",
+   "sha256": "14ff82424b36dad452d8513352ffabeeb67166af770e2c83f7a235a44b84a222"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/observability.md",
+   "source": "langchain",
+   "sha256": "396d2eb2f1b205c64516662ca18c9c793ccd373c274cff9e6f82b84a5bd7c6dc"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/overview.md",
+   "source": "langchain",
+   "sha256": "b3cd3b06a31473aeb729889574bdad6fb1d13871a6d713611b8e52708be45cb0"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/philosophy.md",
+   "source": "langchain",
+   "sha256": "c8127c5cc5c2d000d0c6326e123443b7fa6dc1c6dee9df9e6224be0e9ab62d5b"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/quickstart.md",
+   "source": "langchain",
+   "sha256": "2445d23895f2c70524b170223f9fb4f533ee532287aea9e967286e4966479ba4"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/runtime.md",
+   "source": "langchain",
+   "sha256": "483b09b47fcaea63b46e191be7028e0fee5e3d5e8a454e0811cefed42cf29bf0"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/short-term-memory.md",
+   "source": "langchain",
+   "sha256": "9af6acc8a2c7a620749eea45bcbe6ee61f48e7f1f27047a1e8e918adeec84f80"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/sql-agent.md",
+   "source": "langchain",
+   "sha256": "c6de4f4aab9a296b2abab79656fface620e99dc6057bc0be8a8098387762d2ef"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/streaming.md",
+   "source": "langchain",
+   "sha256": "6b77a7571a5c7664fc7bb0a5d0b77da6ac91f1a236460523c31c05d85eb52c6f"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/structured-output.md",
+   "source": "langchain",
+   "sha256": "c2c52f4a59c84a1818ef93a6cca67ae42ba34d3515b19de7c96faa17d458e461"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/studio.md",
+   "source": "langchain",
+   "sha256": "000494b66218753bb4d801dcd7399e836928a19edffff6c0b07cc452aeacd216"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/test/evals.md",
+   "source": "langchain",
+   "sha256": "dde90504069f7555da0cebfb52a496d74a96b337d46f723eb591e22bcd6a312b"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/test.md",
+   "source": "langchain",
+   "sha256": "ca94abe13f68df9f53e8873e67c412cb55fcb01604244da4d3cbe3824c8b043b"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/test/integration-testing.md",
+   "source": "langchain",
+   "sha256": "532e4dbb976efa548dbda0d740e11b9460bed7231b8b1496e24920c83bbeebdf"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/test/unit-testing.md",
+   "source": "langchain",
+   "sha256": "43376fc446e0aa41bea7d5f624b1eaf9d5ab0f2fe90c8f7510066b2c7f04ed9f"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/tools.md",
+   "source": "langchain",
+   "sha256": "16cc909dec84847282684c49f586c612a17272ef27445d8eac4448ec11b912b9"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/ui.md",
+   "source": "langchain",
+   "sha256": "a2c11160cc97ef350519d6c61e4d347ba187854e1d76a9aeadb8cbedf68a32e6"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langchain/voice-agent.md",
+   "source": "langchain",
+   "sha256": "8dd7f62761bd5c2c3ca2459e11288b57d12f5e4c5028c4ca3be5e6a2b4477d37"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/add-memory.md",
+   "source": "langchain",
+   "sha256": "d20cc255491bf5ae3fcca6c18172b13dc8416da526fcf0595b300e1529d7b828"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/agentic-rag.md",
+   "source": "langchain",
+   "sha256": "8a936698ed4adb5b1fdbb0705133bf466d40c06af54b3ccbb939992dd7b03f38"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/application-structure.md",
+   "source": "langchain",
+   "sha256": "1766c556105f2687643a29ced20141fc6afdf44ee9fa32094a1270ce991ff375"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/backward-compatibility.md",
+   "source": "langchain",
+   "sha256": "23a0d7f05077ea306d0ddc33f7eb755fbda0097e90c2cc94cb510d6b2c2c3e62"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/case-studies.md",
+   "source": "langchain",
+   "sha256": "338926f634d93a1ac24084de414d2c8c75b4101e2112a78df8684cbce807417d"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/checkpointers.md",
+   "source": "langchain",
+   "sha256": "0ea443be4435fbb6f0984a74d132f94c7fd577d30c64389b8cb7f0a0cd9257db"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/deploy.md",
+   "source": "langchain",
+   "sha256": "85db9deec2c16a6de9efa47acfa3dac4923e49baebb7eed3585df26f814321e9"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/event-streaming.md",
+   "source": "langchain",
+   "sha256": "b810a77dd07b829d06dc9af531a80a32c2b8b76d344385d73b41c3db1f3dfc43"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/fault-tolerance.md",
+   "source": "langchain",
+   "sha256": "04f28a210d7c9648d3b94ea677eb6aea8c5fe39b6474e51947e28f4816e4751f"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/frontend/custom-stream-channels.md",
+   "source": "langchain",
+   "sha256": "62e50999d3d915d46263aab80f0d92c2566792a596fc724c66df8b97133c44b3"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/frontend/graph-execution.md",
+   "source": "langchain",
+   "sha256": "4c1168e4303940c9a97adb49860257dd8fd3752fe8765f07460b1468b724a57a"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/frontend/overview.md",
+   "source": "langchain",
+   "sha256": "ce69ba407681db64b8fe42ea5eeb1ac7a0202eb1d6f8e1e403818f4a72a5f0fd"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/functional-api.md",
+   "source": "langchain",
+   "sha256": "2b9e63b64538eb518a8bbe7a4861270788c34e969e584b2ef53796b81cdfd31c"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/graph-api.md",
+   "source": "langchain",
+   "sha256": "c221d39109187ef0de963161a18e6b1d472657374b9d38c9a0291db3486d3045"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/graph-api-control-flow.md",
+   "source": "langchain",
+   "sha256": "29fea456c6dfdc02112726abb60aa432e234ec9afbee9bb799ad2dd58cd2beea"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/graph-api-nodes.md",
+   "source": "langchain",
+   "sha256": "bb91cd05fc9c1bc423325a1ae278e859c29267e00da3effe6952a36593ecef9d"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/graph-api-send-command.md",
+   "source": "langchain",
+   "sha256": "ef56267211a5177e50f5e6e31968a23fa1d29269eeb918515aeb01efcb06cfe5"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/graph-api-state.md",
+   "source": "langchain",
+   "sha256": "6bd0090318a5311117b576b8f1955bfacf86cab04450e457bb09a27e50a1d359"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/graph-api-visualize.md",
+   "source": "langchain",
+   "sha256": "23a930685afc363f7c851d1808a99f49edc0484430f26ee66815c75fa71a2b49"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/interrupts.md",
+   "source": "langchain",
+   "sha256": "9d3dc74c19236853cfdc8770d443a5da12acb1ea26797a77d0323773494d04c5"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/local-server.md",
+   "source": "langchain",
+   "sha256": "1792190425f912474825c7b1fb9dc55916612ade3cbf5afc5816c21a49bedb8f"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/observability.md",
+   "source": "langchain",
+   "sha256": "f11104cb6ca12bafc267e384151a8bad3068ac80d449962e4b3c869c11d1a4d2"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/overview.md",
+   "source": "langchain",
+   "sha256": "13df02e8cd25eb6a81f79b5d1d4f9966eae5cbe7a0161e0eaafbcf0839a5a559"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/persistence.md",
+   "source": "langchain",
+   "sha256": "9985e697f3f56c9c703360f75d7e56c0d3040307d46ccff4b0a7d4964ab07932"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/pregel.md",
+   "source": "langchain",
+   "sha256": "4946dc7d8259fee9dc1e224cd312924851c70bc2f0a698b131d31efd7b0be53e"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/quickstart.md",
+   "source": "langchain",
+   "sha256": "ca74cbcc20e23f21fa6d5261f646219ccc0dc66a86e040160b0164a66463ab7a"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/sql-agent.md",
+   "source": "langchain",
+   "sha256": "fbbd252b85af8016dd745b83ce9999eccb1d9c9b272ba4a4c6963189ccfcfbf9"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/stores.md",
+   "source": "langchain",
+   "sha256": "9c2261dad1d2d3f1949add4e7eede7eb679a315be1718a5e12f7218fb19819b4"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/streaming.md",
+   "source": "langchain",
+   "sha256": "db148bdcca1be948e0477d6b90ef1e1588227b1d517e5708b94d3d580062d3be"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/studio.md",
+   "source": "langchain",
+   "sha256": "91bcc1919aee6cbd35b239357486e95daadc1ec54f0286d0fe8050cc62b7b826"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/test.md",
+   "source": "langchain",
+   "sha256": "f52f5a58fdcefa65873037aca4a09358fdac685c355d05832ad6055a2735990b"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/thinking-in-graph-api.md",
+   "source": "langchain",
+   "sha256": "8d92ba58f2b5ef3a1282a5d121cbcae933d31627bf4522547443aaf5fef6113c"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/ui.md",
+   "source": "langchain",
+   "sha256": "6394406f841c99da2ed61ef39b1bb2170ee2081e5f85dcbf7f2f7ffaf49698ab"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/use-graph-api.md",
+   "source": "langchain",
+   "sha256": "c5c46c95193f74f9fac1403027ba13226ba4c5f7c93eb4f5ea35a35dc31d1dd4"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/use-subgraphs.md",
+   "source": "langchain",
+   "sha256": "4c8932e29522cc2dcc3607be4cd9d41d54f00286c8e03ca4181a3103b2a7e91c"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/use-time-travel.md",
+   "source": "langchain",
+   "sha256": "56cea55cfa011f3a4afbe6c28aa93339416e2cccf3ad16d2b22b10c78952b84a"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/langgraph/workflows-agents.md",
+   "source": "langchain",
+   "sha256": "3d3d6b7ddb7231159db654bd03f6100f9daf96a11d1e7d556901c5582123f31a"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/learn.md",
+   "source": "langchain",
+   "sha256": "c3a2b6e3c75ad67015e6b8d45979630d95adf31bcf1cdf566164f70e1ca33a66"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/migrate/langchain-mcp-adapters.md",
+   "source": "langchain",
+   "sha256": "0a8008739d7daefa4db7778426c463cdefba30e1327c5b153991a04572109e45"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/migrate/langchain-v1.md",
+   "source": "langchain",
+   "sha256": "8a08f4d7341458c7de6fe2d96a38425bec7395638a89fb07927ebdcb98c52159"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/migrate/langgraph-supervisor.md",
+   "source": "langchain",
+   "sha256": "f3a7a9e9c994a8d38650cf2821eb0321d436677ab379ff23e70f074408f16cd6"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/migrate/langgraph-v1.md",
+   "source": "langchain",
+   "sha256": "660a465bdb5e52c885417a853c24d8fbb067a31f91afcb4e24ab93b0c37e4912"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/reference/overview.md",
+   "source": "langchain",
+   "sha256": "fada0cbcee3817c7ab0dbc27d4c9dc89280575763f1dd6649926489bbc6c9811"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/release-policy.md",
+   "source": "langchain",
+   "sha256": "f15c414cfb2ca70d1ef1a5a55aa9119718896822ce7fbc541872d075e86e04a8"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/releases/changelog.md",
+   "source": "langchain",
+   "sha256": "845eee9c7d962b9847ede22849eee702513c96da3247beb1d974957e261c1f03"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/releases/langchain-v1.md",
+   "source": "langchain",
+   "sha256": "c0468b8e83984cb3538a534086703ed2989c5511983b8ac133171c4246b40037"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/releases/langgraph-v1.md",
+   "source": "langchain",
+   "sha256": "c0d01c3d96a48dfaf54c4ebbfff61a80eeabbe81de1389ddc7bfc1a82ccaf215"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/security-policy.md",
+   "source": "langchain",
+   "sha256": "f7f4c6a18dce84d216a896db6ea6919b79cffb6eec13ea8965ccd5c6c1962ed0"
+  },
+  {
+   "url": "https://docs.langchain.com/oss/python/versioning.md",
+   "source": "langchain",
+   "sha256": "d2bd1df3c06a97d960224dd792be456703415e21959fd1ae0ecebb4ac147283f"
+  }
+ ]
+}

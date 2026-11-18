@@ -1,6 +1,6 @@
 # Status - sage
 
-Last updated: 2026-11-15
+Last updated: 2026-11-18
 
 ## Current focus
 
@@ -118,6 +118,39 @@ learning trail.
     scoring, generator pinning), plus the eval runs and this file. Not pushed.
   - `docs/wiki/` still describes the single-site loader; needs a `/document` pass.
 
+## State 2026-11-16 (branch `graph-design`, all uncommitted; commits were not requested)
+
+- Alp's calls today: he hand-writes none of the graph pieces ("build it all"); G9 freeze
+  and rebuild; he created the AuraDB Free instance himself (`NEO4J_*` in `.env`).
+- Frozen snapshot `langchain-2026-11-16` (192 pages, id `3533e57389f9`). The eval
+  collection of that name was ingested from it into the local store (4,797 vectors) and
+  the harness is pinned to it (`EVAL_SNAPSHOT`). Structural graph built from it in
+  AuraDB: 9,986 nodes, 19,143 relationships. Details and decisions G16-G19: `graph.md`.
+- 98 tests pass, ruff clean. New deps: `neo4j`, `certifi`.
+- **Every vector-arm score is now stale**: `evals/runs/*` and `compare.md` are from the
+  July crawl. Not re-scored yet. Run in a plain terminal, not from Claude Code (long
+  background jobs get killed here, `gotchas.md`); arms run one after another because
+  embedded Qdrant allows one process:
+  `foreach ($v in 'baseline','rerank-cohere','hybrid','hybrid-rerank') { uv run python -m sage.evals.harness run $v }; uv run python -m sage.evals.harness compare`
+  Each `run` discards the July answers, regenerates 36 and scores them; it resumes if
+  the free quota (resets 00:00 UTC) runs out. Stop condition: `compare.md` shows the
+  four rows with snapshot `langchain-2026-11-16`.
+- `structural`, `contextual` and `chunk-fixed` now point at `langchain-2026-11-16-*`
+  collections that do not exist yet: `harness ingest <variant>` before running them.
+- Needs Alp: relabel e011 (its page moved, `gotchas.md`); G15 labeling as before.
+- 2026-11-18: `graph-local` strategy built (`adapters/graph_local.py`, ranking decision
+  G20 in `graph.md`) with eval variant `graph-local`; 108 tests pass, ruff clean; one
+  real answer verified against AuraDB. Not scored yet: add it to the plain-terminal
+  eval loop above (`... 'hybrid-rerank','graph-local' ...`); AuraDB must be running.
+- 2026-11-18: `text2cypher` strategy built (`adapters/text2cypher.py`; guard G12, context
+  G21, correction G22, model G23 in `graph.md`) with eval variant `text2cypher`; 148
+  tests pass, ruff clean; live queries and one full answer verified against AuraDB.
+  Not scored yet: the eval loop becomes
+  `... 'hybrid-rerank','graph-local','text2cypher' ...`. On the current golden set it
+  is expected to lose (it answers passage questions with keyword `CONTAINS`); its claim
+  needs G15's aggregate questions. "Source page retrieved" reads none for it (G21).
+- Next build step: `graph-entity` (G10: LLM extraction into its own namespace, G11, G13).
+
 ## Blocked
 
 - `rerank-bge` stays segfault-blocked (`gotchas.md`).
@@ -135,8 +168,8 @@ learning trail.
    stands alone (fusion with RRF optional). Design record: `graph.md` (decision nodes G1-G15).
    Built 2026-11-15 on branch `graph-design`: the `RetrievalStrategy` port, with today's
    flow as the `vector` strategy (`SAGE_STRATEGY`); 62 tests pass, real `sage.ask` verified.
-   Next build step needs Alp: AuraDB Free instance + `NEO4J_URI`/`NEO4J_USERNAME`/
-   `NEO4J_PASSWORD` in `.env`, and his pick of drills (`graph.md` open question 4).
+   Built 2026-11-16 (same branch, uncommitted): frozen snapshot, `GraphStore` port +
+   Neo4j adapter, structural builder; the graph is live in AuraDB (see below).
 6. Machine limit: 3.6 GB RAM, Docker not running. Local Neo4j + Qdrant server will not
    fit; the free managed tiers (AuraDB Free, Qdrant Cloud free) are the realistic
    "free" option, and both pause when idle.
