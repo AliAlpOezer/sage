@@ -88,6 +88,20 @@ class Settings:
     qdrant_url: str = ""
     qdrant_api_key: str = ""
     collection: str = "langchain-docs"
+    graph_store: str = "neo4j"
+    # Neo4j AuraDB connection; the three names are the ones Aura's credentials file uses.
+    neo4j_uri: str = ""
+    neo4j_username: str = "neo4j"
+    neo4j_password: str = field(default="", repr=False)
+    neo4j_database: str = ""  # "" = the server's default database
+    graph_query_timeout: float = 20.0  # seconds a graph read may run
+    graph_seed_k: int = 10  # vector seeds a graph strategy expands from (at least k)
+    # The model that writes Cypher for the text2cypher strategy; "" = the generation model.
+    text2cypher_model: str = ""
+    text2cypher_max_rows: int = 50  # forced LIMIT on every LLM-written query (graph.md G12)
+    # Which RetrievalStrategy answers: "vector" is the Qdrant flow below (dense,
+    # optional BM25 + RRF, optional rerank); graph strategies register their own names.
+    strategy: str = "vector"
     assembly_order: str = "edges"  # edges | naive (Day-33 Lost-in-the-Middle knob)
     sparse_retriever: str = "none"  # none | bm25 (Day-36 hybrid search). "none" = dense-only baseline.
     reranker: str = "none"  # none | bge | cohere (Day-37 precision stage). "none" = passthrough baseline.
@@ -108,6 +122,9 @@ class Settings:
     gemini_api_key: str = ""
     sources: tuple[str, ...] = ("langchain",)  # names from sage.sources.SOURCES
     page_cache: str = "data/pages"  # fetched doc pages, reused across ingests; "" = off
+    # Name of a frozen page snapshot (`sage.snapshot`). When set, pages come from it
+    # instead of a live crawl of `sources`, so every store is built from one corpus.
+    snapshot: str = ""
     top_k: int = 5
 
     @property
@@ -116,6 +133,11 @@ class Settings:
         return self.generation_model or _default_model(
             GENERATOR_DEFAULT_MODELS, self.generator, "SAGE_GENERATION_MODEL"
         )
+
+    @property
+    def resolved_text2cypher_model(self) -> str:
+        """The model that writes Cypher for text2cypher, after defaulting."""
+        return self.text2cypher_model or self.resolved_generation_model
 
     @property
     def resolved_judge_model(self) -> str:
@@ -150,6 +172,16 @@ class Settings:
             qdrant_url=os.getenv("SAGE_QDRANT_URL", d.qdrant_url),
             qdrant_api_key=os.getenv("QDRANT_API_KEY", d.qdrant_api_key),
             collection=os.getenv("SAGE_COLLECTION", d.collection),
+            graph_store=os.getenv("SAGE_GRAPH_STORE", d.graph_store),
+            neo4j_uri=os.getenv("NEO4J_URI", d.neo4j_uri),
+            neo4j_username=os.getenv("NEO4J_USERNAME", d.neo4j_username),
+            neo4j_password=os.getenv("NEO4J_PASSWORD", d.neo4j_password),
+            neo4j_database=os.getenv("NEO4J_DATABASE", d.neo4j_database),
+            graph_query_timeout=float(os.getenv("SAGE_GRAPH_QUERY_TIMEOUT", str(d.graph_query_timeout))),
+            graph_seed_k=int(os.getenv("SAGE_GRAPH_SEED_K", str(d.graph_seed_k))),
+            text2cypher_model=os.getenv("SAGE_TEXT2CYPHER_MODEL", d.text2cypher_model),
+            text2cypher_max_rows=int(os.getenv("SAGE_TEXT2CYPHER_MAX_ROWS", str(d.text2cypher_max_rows))),
+            strategy=os.getenv("SAGE_STRATEGY", d.strategy),
             assembly_order=os.getenv("SAGE_ASSEMBLY_ORDER", d.assembly_order),
             sparse_retriever=os.getenv("SAGE_SPARSE_RETRIEVER", d.sparse_retriever),
             reranker=os.getenv("SAGE_RERANKER", d.reranker),
@@ -174,5 +206,6 @@ class Settings:
                 n.strip() for n in os.getenv("SAGE_SOURCES", ",".join(d.sources)).split(",") if n.strip()
             ),
             page_cache=os.getenv("SAGE_PAGE_CACHE", d.page_cache),
+            snapshot=os.getenv("SAGE_SNAPSHOT", d.snapshot),
             top_k=int(os.getenv("SAGE_TOP_K", str(d.top_k))),
         )

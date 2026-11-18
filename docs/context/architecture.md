@@ -30,13 +30,20 @@ adapter and registering it — nothing else changes. The query loop is shared by
 | `src/sage/loader.py` | Sitemap parse (follows sitemap indexes) + concurrent markdown-page fetch → `Page` objects, per source. |
 | `src/sage/ingest.py` | Ingestion pipeline entry point: `python -m sage.ingest`. |
 | `src/sage/assembly.py` | Arranges ranked chunks into context ("edges-first" ordering, addressing lost-in-the-middle). |
-| `src/sage/service.py` | `answer(question, k) -> Answer{answer, sources}` — the shared query loop used by both CLI and API. Raises `EmptyIndex` if the store is empty. |
+| `src/sage/service.py` | `answer(question, k) -> Answer{answer, sources, strategy}` - the shared query loop used by both CLI and API: runs the `RetrievalStrategy` named by `SAGE_STRATEGY` (default `vector`), arranges, generates. `EmptyIndex` (from `ports.py`) propagates if the strategy's store is empty. |
+| `src/sage/adapters/vector_strategy.py` | The `vector` strategy: dense search, optional BM25 + RRF, rerank, cut to k. Graph strategies register beside it and never call it. |
+| `src/sage/adapters/graph_local.py` | The `graph-local` strategy: seeds from Neo4j's vector index, one hop over the structural graph, RRF of similarity and support (`graph.md` G20). Reads only through `GraphStore.read`. |
+| `src/sage/adapters/text2cypher.py` | The `text2cypher` strategy: an LLM (`ChatModel` port, `SAGE_TEXT2CYPHER_MODEL`) writes one Cypher query over the structural schema; a guard refuses writes, the query runs capped and read-only, one correction on error or no rows; its rows become one excerpt with no page URL (`graph.md` G12, G21-G23). |
+| `src/sage/graph/current.py` | `check_build`: every graph strategy refuses a graph built from another snapshot (or, if it embeds questions, another embedding model). |
+| `src/sage/snapshot.py` | Frozen page snapshots: `freeze <name>` crawls once and pins it; `SAGE_SNAPSHOT=<name>` makes `load_pages` read it from disk, hash-verified, no network. Manifest (url + sha256) in `evals/snapshots/<name>.json` (committed), content in `data/snapshots/<name>/` (local). |
+| `src/sage/graph/` | Knowledge graph: `schema.py` (labels, keys, namespaces, `Node`/`Edge` records), `markdown.py` (sections, links, symbols; fence-aware), `structural.py` (pages -> records, pure), `build.py` (`python -m sage.graph.build`: embed, merge, prune). Design record: `graph.md`. |
+| `src/sage/adapters/neo4j_store.py` | `GraphStore` port adapter, the only module importing `neo4j`. Keyed `MERGE` writes stamped with a build id; `read()` runs in a read-access transaction. `NEO4J_URI/USERNAME/PASSWORD/DATABASE` in `.env`. |
 | `src/sage/api.py` | FastAPI app: `POST /ask {question, k?}` → `{answer, sources}`, `GET /health`. CORS is wide open (`allow_origins=["*"]`) — dev only. |
 | `src/sage/ask.py` | Thin CLI over `service.answer`: `python -m sage.ask "question" [-k N]`. |
 | `src/sage/models.py` | `Chunk` (incl. `make_id`), `ScoredChunk`, `Page`. |
 | `src/sage/evals/` | RAGAS eval harness: `judge.py`, `dataset.py`, `harness.py` (config-driven variant runs), `scorecard.py`, `label_helper.py` / `build_ragset.py` (worksheet → hand-labeled eval set), `bench_judges.py`, `smoke.py`. |
 | `evals/` | Eval data at the repo root (not under `src/`): candidate questions, the fillable labeling worksheet, and (once built) the hand-labeled `ragset_v1.jsonl`. See `evals/README.md` for the full workflow. |
-| `data/qdrant/` | Local embedded Qdrant storage (gitignored). File-locked to one process. Collections: `tech-docs` (all four sources, what the app serves) and `langchain-docs` (LangChain only, the eval corpus; the harness pins every variant to it via `EVAL_CORPUS`). |
+| `data/qdrant/` | Local embedded Qdrant storage (gitignored). File-locked to one process. Collections: `tech-docs` (local copy of what the app serves from Qdrant Cloud), `langchain-2026-11-16` (the eval corpus since 2026-11-16, ingested from the snapshot of that name; the harness pins every variant to it via `EVAL_CORPUS`/`EVAL_SNAPSHOT`) and `langchain-docs` (the July live crawl behind every score dated before 2026-11-16; kept, no longer scored). |
 | `tests/` | pytest: `test_assembly.py`, `test_chunker.py`, `test_factory.py`. |
 
 ## Boundaries

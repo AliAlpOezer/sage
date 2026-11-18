@@ -176,3 +176,27 @@ Cause: ragas, pandas and the langchain packages live in the non-default `eval`
 dependency group. A plain `uv sync` is exact and uninstalls them (seen 2026-11-10 after
 a lock upgrade); `uv run` alone never removes them, which hides the problem.
 Fix: `uv sync --group eval`.
+
+### Neo4j Aura: `ServiceUnavailable: Unable to retrieve routing information`
+Seen 2026-11-16 with the instance Running in the console. Three causes, in the order
+they showed up:
+- The instance is minutes old. Aura's credentials file says to wait; retry.
+- TLS: the driver's inner error is `SSLCertVerificationError ... self-signed certificate
+  in certificate chain`. Nothing is intercepting. Aura's chain ends in `SSL.com TLS RSA
+  Root CA 2022`, and Python on Windows trusts only the roots Windows has already
+  downloaded into its store, which did not include it. `openssl s_client` (own bundle)
+  verified the same chain fine. Fix, in `adapters/neo4j_store.py::connect`: a `+s` URI is
+  rewritten to the plain scheme with `encrypted=True` and
+  `trusted_certificates=TrustCustomCAs(certifi.where())` (the driver refuses those
+  options together with a `+s` scheme). Do not switch to `+ssc`: that turns verification off.
+- Paused: Free pauses after 3 days idle; resume in the console. The adapter raises
+  `GraphUnavailable` saying so.
+Also: `database_="neo4j"` fails with `DatabaseNotFound`. The database is named after the
+instance id (`NEO4J_DATABASE`); leaving it empty uses the default and works too.
+
+### A golden question's source page is missing from the snapshot
+`evals/ragset_v1.jsonl` was labeled against the July site. Against snapshot
+`langchain-2026-11-16` one label is dead: e011 -> `langgraph/install.md` (now redirects
+to `langgraph/quickstart.md`). Its "source page retrieved" is 0 for every arm. Relabeling
+is Alp's. After freezing a new snapshot, check every `source_urls` entry against the
+manifest before scoring.

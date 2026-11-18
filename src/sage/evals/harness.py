@@ -11,7 +11,8 @@ collection and must be ingested first (costs embedding $; gated behind `ingest`)
 Query-time knobs (top_k, assembly order) reuse the baseline collection — cheap.
 
     uv run python -m sage.evals.harness list
-    uv run python -m sage.evals.harness ingest chunk-fixed        # only chunker variants
+    uv run python -m sage.evals.harness ingest baseline           # once per snapshot
+    uv run python -m sage.evals.harness ingest chunk-fixed        # chunker variants
     uv run python -m sage.evals.harness run assembly-naive        # generate + score
     uv run python -m sage.evals.harness run baseline --phase score
     uv run python -m sage.evals.harness compare                   # -> runs/compare.md
@@ -39,6 +40,11 @@ from sage.service import answer as pipeline_answer
 RUNS_DIR = Path("evals/runs")
 INDEX = RUNS_DIR / "index.jsonl"  # append-only longitudinal history
 
+# The frozen page snapshot every arm is built from (`sage.snapshot`, graph.md G9).
+# Each store built from it is named after it, so a collection ingested from an
+# earlier crawl can never be scored as if it were this corpus.
+EVAL_SNAPSHOT = "langchain-2026-11-16"
+
 # name -> (Settings overrides, one-line description). "baseline" is the reference.
 # assembly-naive is the Day-33 Lost-in-the-Middle control arm. chunk-* re-index,
 # so they carry their own collection and must be ingested before `run`.
@@ -56,7 +62,7 @@ VARIANTS: dict[str, tuple[dict, str]] = {
         "Day-37 precision stage: retrieve 30 -> Cohere Rerank v2 -> keep top_k",
     ),
     "chunk-fixed": (
-        {"chunker": "fixed", "collection": "langchain-docs-fixed"},
+        {"chunker": "fixed", "collection": f"{EVAL_SNAPSHOT}-fixed"},
         "fixed-size chunks, structure-blind (needs ingest)",
     ),
     "hybrid": (
@@ -68,12 +74,20 @@ VARIANTS: dict[str, tuple[dict, str]] = {
         "what the app serves: dense + BM25 -> RRF -> Cohere Rerank -> keep top_k",
     ),
     "structural": (
-        {"chunker": "structural", "collection": "langchain-docs-structural"},
+        {"chunker": "structural", "collection": f"{EVAL_SNAPSHOT}-structural"},
         "Day-38 free control: heading-breadcrumb prefix, no LLM (needs ingest)",
     ),
     "contextual": (
-        {"chunker": "contextual", "collection": "langchain-docs-contextual"},
+        {"chunker": "contextual", "collection": f"{EVAL_SNAPSHOT}-contextual"},
         "Day-38: LLM page blurb + breadcrumb prefix before embedding (needs ingest)",
+    ),
+    "graph-local": (
+        {"strategy": "graph-local"},
+        "Neo4j structural graph: vector seeds, one hop out, RRF of similarity and support",
+    ),
+    "text2cypher": (
+        {"strategy": "text2cypher"},
+        "Neo4j structural graph: an LLM writes one read-only Cypher query; its rows are the context",
     ),
     # "chunk-semantic": stretch goal — needs a hand-written semantic chunker
     # (embedding-based boundary detection). Own it yourself, then register
@@ -82,12 +96,14 @@ VARIANTS: dict[str, tuple[dict, str]] = {
 
 
 # The golden set was labeled against the LangChain docs alone, so every variant is
-# pinned to that corpus in the local store whatever `.env` serves; chunk-* variants
-# override the collection. Retrieval stages are pinned off too, so the app serving
+# pinned to that corpus (the snapshot) in the local store whatever `.env` serves;
+# chunk-* variants override the collection. Retrieval stages are pinned off too, so the app serving
 # hybrid + rerank never leaks into the baseline arm; variants switch them on.
 EVAL_CORPUS = {
+    "strategy": "vector",
     "sources": ("langchain",),
-    "collection": "langchain-docs",
+    "snapshot": EVAL_SNAPSHOT,
+    "collection": EVAL_SNAPSHOT,
     "qdrant_url": "",
     "sparse_retriever": "none",
     "reranker": "none",
@@ -99,6 +115,18 @@ def variant_settings(name: str) -> Settings:
         raise SystemExit(f"unknown variant {name!r}; try: {', '.join(VARIANTS)}")
     overrides, _ = VARIANTS[name]
     return replace(Settings.from_env(), **{**EVAL_CORPUS, **overrides})
+
+
+def _strategy_config(settings: Settings) -> str:
+    """The knobs that set what a strategy retrieves, for the run header."""
+    if settings.strategy == "graph-local":
+        return f"graph_seed_k={settings.graph_seed_k}"
+    if settings.strategy == "text2cypher":
+        return (
+            f"text2cypher_model=`{settings.resolved_text2cypher_model}` "
+            f"max_rows={settings.text2cypher_max_rows}"
+        )
+    return f"collection=`{settings.collection}`"
 
 
 def _run_dir(name: str) -> Path:
@@ -113,11 +141,16 @@ def phase_generate(name: str, settings: Settings) -> None:
     answers_path = _run_dir(name) / "answers.jsonl"
     model = settings.resolved_generation_model
     cached = _read_jsonl(answers_path)
-    # Answers from another generator are not comparable across variants: drop them
-    # (git keeps the old file) so every arm of a comparison shares one generator.
-    kept = [rec for rec in cached if rec.get("generator") == model]
+    # Answers from another generator or another corpus are not comparable across
+    # variants: drop them (git keeps the old file) so every arm shares both.
+    kept = [
+        rec for rec in cached if rec.get("generator") == model and rec.get("snapshot") == settings.snapshot
+    ]
     if len(kept) != len(cached):
-        print(f"[{name}] discarding {len(cached) - len(kept)} answers not generated by {model}")
+        print(
+            f"[{name}] discarding {len(cached) - len(kept)} answers not generated by {model} "
+            f"from snapshot {settings.snapshot}"
+        )
         answers_path.write_text(
             "".join(json.dumps(rec, ensure_ascii=False) + "\n" for rec in kept), encoding="utf-8"
         )
@@ -136,6 +169,8 @@ def phase_generate(name: str, settings: Settings) -> None:
                     "question": t.question,
                     "answer": ans.answer,
                     "generator": model,
+                    "snapshot": settings.snapshot,
+                    "strategy": ans.strategy,
                     "retrieved_contexts": [s.text for s in ans.sources],
                     "retrieved_urls": [s.url for s in ans.sources],
                 }
@@ -256,8 +291,15 @@ SOURCE_HIT = "source_hit"
 
 
 def _source_hit(gold_urls: Sequence[str], retrieved_urls: Sequence[str]) -> float | None:
-    """1.0 if a labeled source page was retrieved, None when the triple names none."""
-    return float(bool(set(gold_urls) & set(retrieved_urls))) if gold_urls else None
+    """1.0 if a labeled source page was retrieved.
+
+    None when the triple names no page, or when the context cites none: a strategy
+    that returns query results rather than passages (text2cypher, graph.md G21) did
+    not miss the page, it never retrieves pages.
+    """
+    if not gold_urls or not any(retrieved_urls):
+        return None
+    return float(bool(set(gold_urls) & set(retrieved_urls)))
 # Score this many samples per RAGAS call, so a quota stop loses one batch, not the run.
 SCORE_BATCH = 4
 # A sample whose metrics stay NaN after this many judge attempts is accepted as NaN
@@ -348,10 +390,11 @@ def _write_run(name: str, df: pd.DataFrame, settings: Settings, n_total: int, ge
         ),
         "",
         (
-            f"Config: chunker=`{settings.chunker}` top_k={settings.top_k} "
+            f"Config: strategy=`{settings.strategy}` chunker=`{settings.chunker}` top_k={settings.top_k} "
             f"assembly=`{settings.assembly_order}` reranker=`{settings.reranker}`"
             f"{f' retrieve_k={settings.retrieve_k}' if settings.reranker != 'none' else ''} "
-            f"collection=`{settings.collection}`"
+            f"{_strategy_config(settings)} "
+            f"snapshot=`{settings.snapshot}`"
         ),
         "",
         f"## Answerable questions (n={len(answerable)})",
@@ -399,13 +442,18 @@ def _write_run(name: str, df: pd.DataFrame, settings: Settings, n_total: int, ge
         "source_hit": None if source_hit is None else round(source_hit, 4),
         "generator": generator,
         "judge": settings.resolved_judge_model,
+        "snapshot": settings.snapshot,
         "config": {
+            "strategy": settings.strategy,
             "chunker": settings.chunker,
             "top_k": settings.top_k,
             "assembly_order": settings.assembly_order,
             "reranker": settings.reranker,
             "retrieve_k": settings.retrieve_k,
             "collection": settings.collection,
+            "graph_seed_k": settings.graph_seed_k,
+            "text2cypher_model": settings.resolved_text2cypher_model,
+            "text2cypher_max_rows": settings.text2cypher_max_rows,
         },
     }
     with INDEX.open("a", encoding="utf-8") as f:
@@ -428,20 +476,25 @@ def cmd_compare() -> None:
         print("(no baseline scored yet — deltas omitted)")
     base = latest.get("baseline", {})
 
+    def conditions(row: dict) -> tuple:
+        return (row.get("snapshot"), row.get("generator"), row.get("judge"))
+
     def cell(name: str, value: float | None, reference: float | None) -> str:
         if value is None:
             return "—"
-        if name == "baseline" or reference is None:
+        # A delta is a claim that one arm beats another, and that holds only when
+        # both ran on the same pages with the same generator and judge.
+        if name == "baseline" or reference is None or conditions(latest[name]) != conditions(base):
             return f"{value:.3f}"
         return f"{value:.3f} ({value - reference:+.3f})"
 
     metrics = [c for c in METRIC_COLS if any(c in r["means"] for r in latest.values())]
     header = (
-        "| variant | date | generator | answerable n | "
+        "| variant | date | snapshot | generator | judge | answerable n | "
         + " | ".join(m.replace("_", " ") for m in metrics)
         + " | source page retrieved | declined when unanswerable |"
     )
-    sep = "|---|---|---|---|" + "---|" * (len(metrics) + 2)
+    sep = "|---|---|---|---|---|---|" + "---|" * (len(metrics) + 2)
     out = ["# Variant comparison — latest run per variant", "", header, sep]
     for name in VARIANTS:  # stable order
         if name not in latest:
@@ -451,14 +504,16 @@ def cmd_compare() -> None:
         cells.append(cell(name, r.get("source_hit"), base.get("source_hit")))
         cells.append(cell(name, r.get("abstention"), base.get("abstention")))
         out.append(
-            f"| {name} | {r['date']} | {r['generator']} | {r['n_answerable']} | " + " | ".join(cells) + " |"
+            f"| {name} | {r['date']} | {r.get('snapshot') or 'live crawl, July'} | {r['generator']} | "
+            f"{r['judge']} | {r['n_answerable']} | " + " | ".join(cells) + " |"
         )
     out += [
         "",
         (
             "_The four RAGAS metrics are means over answerable questions only; unanswerable "
             "ones are scored by whether the answer declined. Deltas in parentheses are vs "
-            "baseline, positive = better. Compare rows only when generator and judge match._"
+            "baseline, positive = better, and shown only for a row that shares the baseline's "
+            "snapshot, generator and judge._"
         ),
     ]
     if stale:
@@ -472,8 +527,12 @@ def cmd_ingest(name: str) -> None:
     import asyncio
 
     settings = variant_settings(name)
-    if not (VARIANTS[name][0].get("collection")):
-        raise SystemExit(f"{name} reuses the baseline collection — no separate ingest needed.")
+    if settings.strategy != "vector":
+        raise SystemExit(
+            f"{name} answers from the graph: SAGE_SNAPSHOT={settings.snapshot} uv run python -m sage.graph.build"
+        )
+    if name != "baseline" and not VARIANTS[name][0].get("collection"):
+        raise SystemExit(f"{name} reuses the baseline collection: run `ingest baseline` once.")
     print(f"[{name}] ingesting into collection={settings.collection} chunker={settings.chunker} ...")
     asyncio.run(ingest_mod.run(settings))
 
@@ -481,7 +540,7 @@ def cmd_ingest(name: str) -> None:
 def cmd_list() -> None:
     print("variants:")
     for name, (ov, desc) in VARIANTS.items():
-        tag = " [needs ingest]" if ov.get("collection") else ""
+        tag = " [needs graph build]" if ov.get("strategy") else " [needs ingest]" if ov.get("collection") else ""
         print(f"  {name:16s} {desc}{tag}")
 
 

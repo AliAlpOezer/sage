@@ -98,40 +98,57 @@ def _cache_file(cache_dir: Path | None, url: str) -> Path | None:
     return cache_dir / f"{hashlib.sha256(url.encode()).hexdigest()[:24]}.md" if cache_dir else None
 
 
-async def _load_page(crawl: _Crawl, url: str, cache_dir: Path | None) -> Page | None:
-    cached = _cache_file(cache_dir, url)
-    if cached and cached.exists():
-        raw = cached.read_text(encoding="utf-8")
-    else:
-        raw = await crawl.download(url)
-        if raw is None:
-            return None
-        if cached:
-            cached.write_text(raw, encoding="utf-8")
-    text = crawl.source.clean(raw)
+def page_from_raw(url: str, raw: str, source: DocSource) -> Page | None:
+    """A fetched page after the source's cleaning; None when nothing is left."""
+    text = source.clean(raw)
     if not text.strip():
         return None
     return Page(url=url, title=_title_of(url, text), markdown=text)
 
 
-async def load_source(
+async def _raw_page(crawl: _Crawl, url: str, cache_dir: Path | None) -> str | None:
+    cached = _cache_file(cache_dir, url)
+    if cached and cached.exists():
+        return cached.read_text(encoding="utf-8")
+    raw = await crawl.download(url)
+    if raw is not None and cached:
+        cached.write_text(raw, encoding="utf-8")
+    return raw
+
+
+async def crawl_source(
     client: httpx.AsyncClient, concurrency: int, source: DocSource, cache_dir: Path | None = None
-) -> list[Page]:
+) -> tuple[list[str], list[str | None], int]:
+    """(listed urls, each one's raw markdown or None, pages the site left for a later run)."""
     per_sitemap = await asyncio.gather(*(_sitemap_urls(client, s, source) for s in source.sitemaps))
     urls = list(dict.fromkeys([*(u for urls in per_sitemap for u in urls), *source.pages]))
     crawl = _Crawl(client, source, concurrency)
-    loaded = await asyncio.gather(*(_load_page(crawl, u, cache_dir) for u in urls))
+    raws = await asyncio.gather(*(_raw_page(crawl, u, cache_dir) for u in urls))
+    return urls, list(raws), crawl.left_for_later
+
+
+async def load_source(
+    client: httpx.AsyncClient, concurrency: int, source: DocSource, cache_dir: Path | None = None
+) -> list[Page]:
+    urls, raws, left_for_later = await crawl_source(client, concurrency, source, cache_dir)
+    loaded = (page_from_raw(u, r, source) for u, r in zip(urls, raws, strict=True) if r is not None)
     pages = [p for p in loaded if p is not None]
     print(f"[{source.name}] {len(pages)} of {len(urls)} listed pages loaded")
-    if crawl.left_for_later:
+    if left_for_later:
         print(
-            f"[{source.name}] the site is throttling: {crawl.left_for_later} pages left for a "
+            f"[{source.name}] the site is throttling: {left_for_later} pages left for a "
             f"later run (wait a while, then run the same command again)"
         )
     return pages
 
 
 async def load_pages(settings: Settings) -> list[Page]:
+    if settings.snapshot:
+        from sage.snapshot import load_snapshot  # snapshot imports this module
+
+        pages = load_snapshot(settings.snapshot)
+        print(f"[snapshot {settings.snapshot}] {len(pages)} pages")
+        return pages
     cache_dir = Path(settings.page_cache) if settings.page_cache else None
     if cache_dir:
         cache_dir.mkdir(parents=True, exist_ok=True)

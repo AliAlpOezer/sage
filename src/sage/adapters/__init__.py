@@ -9,7 +9,11 @@ from sage.adapters import (  # noqa: F401
     chat_generator,
     chunkers,
     contextual,
+    graph_local,
+    neo4j_store,
     openrouter_embedder,
     qdrant_store,
     rerank,
+    text2cypher,
+    vector_strategy,
 )

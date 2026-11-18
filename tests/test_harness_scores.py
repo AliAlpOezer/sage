@@ -12,8 +12,16 @@ from sage.evals.harness import (
     _means,
     _merge_score,
     _score_complete,
+    _source_hit,
 )
 from sage.evals.scorecard import METRIC_COLS
+
+
+def test_source_hit_does_not_apply_when_the_context_cites_no_page():
+    assert _source_hit(["https://x/a.md"], ["https://x/b.md", "https://x/a.md"]) == 1.0
+    assert _source_hit(["https://x/a.md"], ["https://x/b.md"]) == 0.0
+    assert _source_hit(["https://x/a.md"], [""]) is None  # text2cypher's query excerpt
+    assert _source_hit([], ["https://x/a.md"]) is None
 
 FULL = dict.fromkeys(METRIC_COLS, 0.5)
 

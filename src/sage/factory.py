@@ -9,10 +9,13 @@ from collections.abc import Callable
 
 from sage.config import Settings
 from sage.ports import (
+    ChatModel,
     Chunker,
     Embedder,
     Generator,
+    GraphStore,
     Reranker,
+    RetrievalStrategy,
     SparseRetriever,
     VectorStore,
 )
@@ -23,6 +26,8 @@ _VECTOR_STORES: dict[str, Callable[[Settings], VectorStore]] = {}
 _SPARSE_RETRIEVERS: dict[str, Callable[[Settings], SparseRetriever]] = {}
 _RERANKERS: dict[str, Callable[[Settings], Reranker]] = {}
 _GENERATORS: dict[str, Callable[[Settings], Generator]] = {}
+_STRATEGIES: dict[str, Callable[[Settings], RetrievalStrategy]] = {}
+_GRAPH_STORES: dict[str, Callable[[Settings], GraphStore]] = {}
 
 # Embedded qdrant holds an exclusive per-process file lock on its storage dir,
 # so there can be only ONE client per process. Building a store per request and
@@ -32,6 +37,8 @@ _GENERATORS: dict[str, Callable[[Settings], Generator]] = {}
 # "already accessed by another instance". Memoize instead — one long-lived store
 # per distinct backend config, reused across requests.
 _VECTOR_STORE_CACHE: dict[tuple[str, str, str], VectorStore] = {}
+# A graph driver owns a connection pool: one per database per process.
+_GRAPH_STORE_CACHE: dict[tuple[str, str, str], GraphStore] = {}
 
 
 def register_chunker(name: str):
@@ -82,6 +89,22 @@ def register_generator(name: str):
     return decorate
 
 
+def register_strategy(name: str):
+    def decorate(builder: Callable[[Settings], RetrievalStrategy]):
+        _STRATEGIES[name] = builder
+        return builder
+
+    return decorate
+
+
+def register_graph_store(name: str):
+    def decorate(builder: Callable[[Settings], GraphStore]):
+        _GRAPH_STORES[name] = builder
+        return builder
+
+    return decorate
+
+
 def make_chunker(settings: Settings) -> Chunker:
     _load_adapters()
     return _build("chunker", _CHUNKERS, settings.chunker, settings)
@@ -120,6 +143,30 @@ def make_reranker(settings: Settings) -> Reranker:
 def make_generator(settings: Settings) -> Generator:
     _load_adapters()
     return _build("generator", _GENERATORS, settings.generator, settings)
+
+
+def make_chat_model(settings: Settings) -> ChatModel:
+    """A free-form chat model from the generator registry, for strategies that call an LLM."""
+    _load_adapters()
+    model = _build("generator", _GENERATORS, settings.generator, settings)
+    if not isinstance(model, ChatModel):
+        raise TypeError(f"generator '{settings.generator}' cannot serve free-form chat completions")
+    return model
+
+
+def make_strategy(settings: Settings) -> RetrievalStrategy:
+    _load_adapters()
+    return _build("strategy", _STRATEGIES, settings.strategy, settings)
+
+
+def make_graph_store(settings: Settings) -> GraphStore:
+    _load_adapters()
+    key = (settings.graph_store, settings.neo4j_uri, settings.neo4j_database)
+    store = _GRAPH_STORE_CACHE.get(key)
+    if store is None:
+        store = _build("graph store", _GRAPH_STORES, settings.graph_store, settings)
+        _GRAPH_STORE_CACHE[key] = store
+    return store
 
 
 def _build(kind: str, registry: dict, name: str, settings: Settings):
